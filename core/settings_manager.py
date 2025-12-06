@@ -29,7 +29,7 @@ DEFAULT_SETTINGS = {
     "max_tokens": 100000,
     "temperature": 0.8,
     "thinking_tokens": 50000,
-    "max_tool_depth": 50,  # Allow agents to chain up to 50 tool calls when working
+    "max_tool_depth": 100,  # Allow agents to chain up to 100 tool calls when working
 }
 
 SETTINGS_FILE = Path(__file__).parent.parent / "data" / "settings.json"

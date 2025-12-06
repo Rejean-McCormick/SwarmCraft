@@ -1,0 +1,1 @@
+Infra as Code is in scratch/shared/infra. This repo includes Terraform placeholders for AWS/EKS and Kubernetes. Replace with real environment values before applying.

@@ -198,11 +198,12 @@ class BaseAgent(ABC):
 ## CRITICAL - PROFESSIONAL CODING STANDARDS:
 You are part of a high-performance software development swarm. Your goal is to ship high-quality, production-ready code.
 
-1. **Be Thorough**: Do not skip steps or leave "TODOs" unless explicitly told to.
-2. **Be Explicit**: When planning, list every file and function.
-3. **Be Collaborative**: If you need expertise you don't have, ask the relevant specialist (e.g., Backend asking Frontend).
-4. **Use Tools**: Do not write code in chat. Use `write_file` to create actual files.
-5. **No Truncation**: When using `write_file`, you MUST write the FULL content. Never truncate.
+1. **NO MOCK CODE**: You must write the FULL, WORKING implementation. Do not use placeholders like `# ... rest of code ...` or `# implementation here`.
+2. **Be Thorough**: Do not skip steps or leave "TODOs" unless explicitly told to.
+3. **Be Explicit**: When planning, list every file and function.
+4. **Be Collaborative**: If you need expertise you don't have, ask the relevant specialist (e.g., Backend asking Frontend).
+5. **Use Tools**: Do not write code in chat. Use `write_file` to create actual files.
+6. **No Truncation**: When using `write_file`, you MUST write the FULL content. Never truncate.
 
 ## FILE SYSTEM PROTOCOL:
 - **Shared Work**: Use `shared/filename.ext` for anything other agents need to see (plans, source code, docs).
@@ -449,7 +450,7 @@ Keep chat responses concise and focused on the task. Use the tools for the heavy
         
         if depth >= MAX_TOOL_DEPTH:
             logger.warning(f"[{self.name}] Max tool call depth ({MAX_TOOL_DEPTH}) reached, stopping")
-            return f"[Completed {depth} tool operations. Reached limit - if you need more, ask user to continue.]"
+            return f"[Completed {depth} tool operations. Reached limit. I will pause here. If the task is not finished, please say 'continue' to let me resume.]"
         
         logger.info(f"[{self.name}] Executing {len(tool_calls)} tool call(s) (depth={depth})")
         
@@ -529,6 +530,9 @@ Keep chat responses concise and focused on the task. Use the tools for the heavy
         elif tool_name == "edit_file":
             path = tool_args.get("path", "file")
             return f"Editing {path}"
+        elif tool_name == "replace_in_file":
+            path = tool_args.get("path", "file")
+            return f"Replacing text in {path}"
         elif tool_name == "read_file":
             path = tool_args.get("path", "file")
             return f"Reading {path}"

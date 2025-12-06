@@ -275,7 +275,9 @@ class Chatroom:
         await self._broadcast_message(message)
         
         # Notify all agents about the new message
-        for agent in self._agents.values():
+        # Use list() to create a copy of values to avoid "dictionary changed size during iteration"
+        # if an agent spawns another agent while processing the message
+        for agent in list(self._agents.values()):
             await agent.process_incoming_message(message)
         
         logger.debug(f"Human message added from {username}: {content[:50]}...")

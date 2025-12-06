@@ -128,7 +128,8 @@ class AgentToolExecutor:
         self.agent_name = agent_name
         # Use dynamic scratch dir (project-aware)
         self.scratch_dir = get_scratch_dir()
-        self.agent_workspace = self.scratch_dir / self._safe_name(agent_name)
+        # FORCE SHARED WORKSPACE: All agents now work in scratch/shared by default
+        self.agent_workspace = self.scratch_dir / "shared"
         self.lock_manager = get_lock_manager()
         
         # Ensure directories exist
@@ -190,6 +191,7 @@ class AgentToolExecutor:
             "write_file": self._write_file,
             "append_file": self._append_file,
             "edit_file": self._edit_file,
+            "replace_in_file": self._replace_in_file,
             "list_files": self._list_files,
             "delete_file": self._delete_file,
             "create_folder": self._create_folder,
@@ -325,6 +327,46 @@ class AgentToolExecutor:
             }
         except Exception as e:
             return {"success": False, "error": f"Failed to edit file: {e}"}
+
+    async def _replace_in_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Replace string in a file."""
+        path = args.get("path", "")
+        old_string = args.get("old_string", "")
+        new_string = args.get("new_string", "")
+        
+        if not path or not old_string:
+            return {"success": False, "error": "path and old_string are required"}
+            
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+            
+        if not resolved.exists():
+            return {"success": False, "error": f"File not found: {path}"}
+            
+        # Check if locked by another agent
+        if await self.lock_manager.is_locked_by_other(str(resolved), self.agent_id):
+            return {"success": False, "error": "File is locked by another agent"}
+            
+        try:
+            async with aiofiles.open(resolved, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                
+            if old_string not in content:
+                return {"success": False, "error": "old_string not found in file"}
+                
+            # Replace only the first occurrence to be safe
+            new_content = content.replace(old_string, new_string, 1)
+            
+            async with aiofiles.open(resolved, 'w', encoding='utf-8') as f:
+                await f.write(new_content)
+                
+            return {
+                "success": True, 
+                "result": f"Replaced text in {path}"
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to replace text: {e}"}
     
     async def _list_files(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """List files in a directory."""
@@ -843,7 +885,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "write_file",
-            "description": "Create or overwrite a file with new content. You MUST provide the COMPLETE file content. Do not use placeholders or truncate code.",
+            "description": "Create or overwrite a file with new content. You MUST provide the COMPLETE file content. Do not use placeholders like '# ... rest of code ...' or truncate code. The file must be fully functional.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -864,7 +906,7 @@ TOOL_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "edit_file",
-            "description": "Edit specific lines in an existing file.",
+            "description": "Edit specific lines in an existing file. Provide the exact new content for the specified line range. Do not replace code with comments.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -886,6 +928,31 @@ TOOL_DEFINITIONS = [
                     }
                 },
                 "required": ["path", "start_line", "end_line", "new_content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "replace_in_file",
+            "description": "Replace a specific string in a file with a new string. Use this for precise edits.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file"
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "The exact string to replace (must match exactly)"
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "The new string to replace it with"
+                    }
+                },
+                "required": ["path", "old_string", "new_string"]
             }
         }
     },
@@ -1165,7 +1232,7 @@ ORCHESTRATOR_TOOL_NAMES = {"spawn_worker", "assign_task", "get_swarm_state", "re
 ORCHESTRATOR_TOOLS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] in ORCHESTRATOR_TOOL_NAMES]
 
 # Worker tools (everything except orchestration)
-WORKER_TOOL_NAMES = {"read_file", "write_file", "edit_file", "list_files", "delete_file", "move_file", 
+WORKER_TOOL_NAMES = {"read_file", "write_file", "edit_file", "replace_in_file", "list_files", "delete_file", "move_file", 
                      "create_folder", "search_code", "run_command", "claim_file", "release_file", 
                      "get_file_locks", "append_file", "get_project_structure"}
 
@@ -1184,18 +1251,18 @@ def get_tools_system_prompt() -> str:
     return """
 
 ## FILE TOOLS
-You have access to tools for working with files in your scratch workspace. Use them to:
+You have access to tools for working with files in the SHARED workspace. Use them to:
 - Read, write, and edit code files
 - Search for code patterns
 - Run safe commands (python, pip, node, npm, git status/log, etc.)
 
 IMPORTANT RULES:
-1. All file paths are relative to your workspace folder
-2. Before editing a file that others might work on, use claim_file to get exclusive access
-3. Release files with release_file when done
-4. Keep responses SHORT when not using tools - tools do the heavy lifting
-5. Check file locks before editing shared files
+1. All file paths are relative to the shared workspace (scratch/shared/)
+2. You are working in a SHARED environment. All agents see the same files.
+3. Before editing a file that others might work on, use claim_file to get exclusive access
+4. Release files with release_file when done
+5. Keep responses SHORT when not using tools - tools do the heavy lifting
+6. **NO MOCK CODE**: When writing files, you must provide the FULL implementation. No placeholders.
 
-Your workspace folder: scratch/{agent_name}/
-Shared folder: scratch/shared/
+Your workspace folder: scratch/shared/
 """

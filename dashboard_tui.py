@@ -197,6 +197,35 @@ class SettingsScreen(ModalScreen):
 # SCROLLABLE WIDGET PANELS
 # ─────────────────────────────────────────────────────────────────────────────
 
+class TokenDetailPanel(Static):
+    """Panel showing token usage details."""
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.tracker = get_token_tracker()
+    
+    def refresh_display(self):
+        """Refresh the token display."""
+        stats = self.tracker.get_stats()
+        
+        content = Text()
+        content.append("Session Totals:\n", style="bold")
+        content.append(f"  Input:  {stats.get('total_input', 0):,}\n")
+        content.append(f"  Output: {stats.get('total_output', 0):,}\n")
+        content.append(f"  Total:  {stats.get('total', 0):,}\n")
+        content.append(f"  Cost:   ${stats.get('total_cost', 0):.4f}\n")
+        
+        # Per-agent breakdown
+        by_agent = stats.get('by_agent', {})
+        if by_agent:
+            content.append("\nBy Agent:\n", style="bold")
+            for agent, agent_stats in by_agent.items():
+                short_name = agent.split()[0] if agent else "?"
+                content.append(f"  {short_name}: {agent_stats.get('total', 0):,}\n")
+        
+        self.update(content)
+
+
 class AgentCard(Static):
     """Individual agent status card."""
     def __init__(self, agent, **kwargs):
@@ -204,92 +233,95 @@ class AgentCard(Static):
         self.agent = agent
         self.accomplishments = []
         self.tokens_used = 0
+        self.current_action = ""  # Granular progress
 
     def add_accomplishment(self, text: str):
         self.accomplishments.append(text)
-        if len(self.accomplishments) > 5:
-            self.accomplishments = self.accomplishments[-5:]
+        if len(self.accomplishments) > 3:  # Keep last 3
+            self.accomplishments = self.accomplishments[-3:]
         self.refresh_display()
 
     def add_tokens(self, count: int):
         self.tokens_used += count
         self.refresh_display()
+        
+    def set_action(self, action: str):
+        """Set current granular action."""
+        self.current_action = action
+        self.refresh_display()
 
     def refresh_display(self):
         icon = AGENT_ICONS.get(self.agent.name, "🤖")
-        status = "🟢 WORKING" if self.agent.status == AgentStatus.WORKING else "⚪ IDLE"
-        task = getattr(self.agent, 'current_task_description', '') or "No task"
         
-        lines = [
-            f"{icon} {self.agent.name}",
-            f"  Status: {status}",
-            f"  Tokens: {self.tokens_used:,}",
-        ]
+        # Status color
+        if self.agent.status == AgentStatus.WORKING:
+            border_style = "green"
+            title = f"{icon} {self.agent.name} (WORKING)"
+        else:
+            border_style = "dim"
+            title = f"{icon} {self.agent.name} (IDLE)"
+            
+        # Content construction
+        content = Text()
+        
+        # Tokens
+        content.append(f"Tokens: {self.tokens_used:,}\n", style="dim")
+        
+        # Current Action (Granular)
+        if self.current_action:
+            content.append(f"Action: {self.current_action}\n", style="bold cyan")
+        
+        # Task
+        task = getattr(self.agent, 'current_task_description', '')
         if task and task != "No task":
-            lines.append(f"  Task: {task[:28]}...")
+            content.append("\nTask:\n", style="bold yellow")
+            content.append(f"{task}\n")
         
+        # Accomplishments
         if self.accomplishments:
-            lines.append("  ───────────────────────")
-            for acc in self.accomplishments[-2:]:
-                lines.append(f"  ✓ {acc[:28]}")
+            content.append("\nLatest:\n", style="bold white")
+            for acc in self.accomplishments:
+                content.append(f"✓ {acc}\n", style="green")
         
-        self.update("\n".join(lines))
-
-
-class TokenDetailPanel(Static):
-    """Detailed token usage panel with per-agent breakdown."""
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def refresh_display(self):
-        tracker = get_token_tracker()
-        stats = tracker.get_stats()
-        
-        lines = [
-            "════════ TOTALS ════════",
-            f"  Prompt:     {stats['prompt_tokens']:>12,}",
-            f"  Completion: {stats['completion_tokens']:>12,}",
-            f"  Total:      {stats['total_tokens']:>12,}",
-            f"  API Calls:  {stats['call_count']:>12}",
-            "",
-            "═══════ BY AGENT ═══════",
-        ]
-        
-        by_agent = stats.get("by_agent", {})
-        for agent, data in list(by_agent.items())[-5:]:
-            short_name = agent.split()[0][:12]
-            total = data["prompt"] + data["completion"]
-            lines.append(f"  {short_name}:")
-            lines.append(f"    {total:,} tokens ({data['calls']} calls)")
-            if data.get("last_task"):
-                lines.append(f"    └─ {data['last_task'][:30]}")
-        
-        if not by_agent:
-            lines.append("  No agent usage yet")
-        
-        self.update("\n".join(lines))
+        # Update with a panel
+        self.update(Panel(content, title=title, border_style=border_style))
 
 
 class DevPlanPanel(Static):
-    """Panel showing the master plan / devplan progress."""
+    """Panel displaying the master plan and todo list."""
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.plan_content = "No plan yet. Ask the Architect to create one."
-
+        self.plan_content = "Loading..."
+    
     def refresh_plan(self):
         """Load the master plan from file."""
         try:
             plan_path = get_scratch_dir() / "shared" / "master_plan.md"
+            todo_path = get_scratch_dir() / "shared" / "todo.md"
+            
+            content_parts = []
+            
             if plan_path.exists():
                 content = plan_path.read_text(encoding='utf-8')
-                self.plan_content = content  # Show entire file, scrollable
+                content_parts.append(content)
             else:
-                self.plan_content = (
+                content_parts.append(
                     "No master_plan.md yet.\n\n"
                     "Ask the Architect:\n"
                     "  'Create a plan for [your project]'\n\n"
                     "The plan will appear here."
                 )
+            
+            if todo_path.exists():
+                todo_content = todo_path.read_text(encoding='utf-8')
+                content_parts.append("\n\n════════════════════════════════════════════════════════════\n")
+                content_parts.append("TODO LIST (scratch/shared/todo.md)\n")
+                content_parts.append("════════════════════════════════════════════════════════════\n")
+                content_parts.append(todo_content)
+            
+            self.plan_content = "\n".join(content_parts)
+            
         except Exception as e:
             self.plan_content = f"Error loading plan: {e}"
         
@@ -418,14 +450,12 @@ class ApiLogEntry(Static):
             lines.append(f"  Messages ({len(messages)}):")
             for i, msg in enumerate(messages):
                 role = msg.get("role", "?")
-                content = msg.get("content", "")
+                content = msg.get("content") or ""
                 lines.append(f"  ┌─[{i+1}] {role.upper()}")
                 # Show full content, wrapped
                 content_lines = content.split('\n')
-                for cl in content_lines[:50]:  # Up to 50 lines per message
+                for cl in content_lines:  # Show all lines
                     lines.append(f"  │ {cl}")
-                if len(content_lines) > 50:
-                    lines.append(f"  │ ... ({len(content_lines) - 50} more lines)")
                 lines.append(f"  └─────")
             
             lines.append("")
@@ -445,10 +475,8 @@ class ApiLogEntry(Static):
                 lines.append("  Content:")
                 lines.append("  ┌─────")
                 response_lines = full_response.split('\n')
-                for rl in response_lines[:100]:  # Up to 100 lines
+                for rl in response_lines:  # Show all lines
                     lines.append(f"  │ {rl}")
-                if len(response_lines) > 100:
-                    lines.append(f"  │ ... ({len(response_lines) - 100} more lines)")
                 lines.append("  └─────")
             
             # Show tool calls (full details when expanded)
@@ -467,12 +495,10 @@ class ApiLogEntry(Static):
                         args_dict = json.loads(args) if args else {}
                         for k, v in args_dict.items():
                             v_str = str(v)
-                            if len(v_str) > 200:
-                                v_str = v_str[:200] + "..."
+                            # Show full argument value
                             lines.append(f"  │   {k}: {v_str}")
                     except:
-                        if len(args) > 500:
-                            args = args[:500] + "..."
+                        # Show full args string
                         lines.append(f"  │   {args}")
                     lines.append(f"  └─────")
             
@@ -507,7 +533,7 @@ class SwarmDashboard(App):
     Screen {
         layout: grid;
         grid-size: 3;
-        grid-columns: 1.5fr 3.5fr 1.67fr;
+        grid-columns: 1.8fr 3.2fr 2.0fr;  /* Wider sidebars */
     }
 
     /* LEFT SIDEBAR - Agent Cards + API Log */
@@ -532,11 +558,10 @@ class SwarmDashboard(App):
     .agent-card {
         width: 100%;
         height: auto;
-        min-height: 5;
-        border: solid $secondary;
+        min-height: 8;  /* Increased height for details */
         margin-bottom: 1;
-        padding: 1;
-        overflow: auto;
+        padding: 0;
+        overflow: hidden;
     }
     
     #api-log-scroll {
@@ -608,17 +633,17 @@ class SwarmDashboard(App):
     }
 
     #tokens-scroll {
-        width: 1fr;
+        width: 34;  /* Fixed width for tokens */
         height: 100%;
         border-right: solid $warning-darken-2;
-        padding: 1;
+        padding: 0 1;
         overflow: auto;
     }
 
     #tools-scroll {
-        width: 1fr;
+        width: 1fr;  /* Remaining space for tools */
         height: 100%;
-        padding: 1;
+        padding: 0 1;
         overflow: auto;
     }
 
@@ -848,10 +873,51 @@ class SwarmDashboard(App):
             return
 
         if message.sender_id == "status":
-            if "🔧" in message.content:
-                parts = message.content.replace("🔧 ", "").split(": ", 1)
+            content = message.content
+            
+            # Tool Call
+            if "🔧" in content:
+                parts = content.replace("🔧 ", "").split(": ", 1)
                 if len(parts) == 2:
-                    self.on_tool_call(parts[0], parts[1])
+                    agent_name, action = parts[0], parts[1]
+                    self.on_tool_call(agent_name, action)
+                    # Update granular status
+                    for card in self.agent_cards.values():
+                        if agent_name in card.agent.name:
+                            card.set_action(f"Tool: {action[:25]}...")
+                            break
+            
+            # Thinking / Working
+            elif "⏳" in content:
+                # Format: "⏳ AgentName is thinking..."
+                parts = content.replace("⏳ ", "").split(" is ", 1)
+                if len(parts) > 0:
+                    agent_name = parts[0]
+                    for card in self.agent_cards.values():
+                        if agent_name in card.agent.name:
+                            card.set_action("Thinking...")
+                            break
+                            
+            # Task Assignment
+            elif "📋" in content:
+                # Format: "📋 Assigning task to AgentName..."
+                if "Assigning task to " in content:
+                    agent_name = content.split("Assigning task to ")[1].replace("...", "").strip()
+                    for card in self.agent_cards.values():
+                        if agent_name in card.agent.name:
+                            card.set_action("Receiving Task...")
+                            break
+
+            # Tool Result / Success
+            elif "✅" in content:
+                # Format: "✅ AgentName: Result"
+                parts = content.replace("✅ ", "").split(": ", 1)
+                if len(parts) == 2:
+                    agent_name = parts[0]
+                    for card in self.agent_cards.values():
+                        if agent_name in card.agent.name:
+                            card.set_action("Idle") 
+                            break
             return
 
         timestamp = message.timestamp.strftime("%H:%M")

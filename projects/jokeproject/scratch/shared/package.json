@@ -1,0 +1,17 @@
+{
+  "name": "jokegen",
+  "version": "0.1.0",
+  "description": "JokeGen API - GET /jokes and POST /jokes",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/integration_test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0",
+    "sqlite3": "^5.1.6"
+  }
+}
