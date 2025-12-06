@@ -1,0 +1,1 @@
+QA harness configuration and endpoints mapping.
