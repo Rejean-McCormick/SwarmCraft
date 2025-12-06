@@ -1,0 +1,4 @@
+{
+  "module": "testmodAlpha",
+  "apis": [ { "path": "/ping", "method": "GET" } ]
+}

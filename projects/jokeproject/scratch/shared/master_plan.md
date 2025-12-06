@@ -1,81 +1,73 @@
-# Master Plan: 100k Jokes Factory
+# Dev Plan: User API Security & CI for Shared Project
 
-Goal: Generate and store 100,000 jokes using a distributed swarm. The swarm will spawn multiple workers to collaboratively produce jokes in parallel, with a central store and an API to access them.
+Plan Objective
+- Implement a secure User API (Express + SQLite) with robust input validation and SQL injection safeguards.
+- Provide a security audit workflow by QA (Bugsy) and a development audit path by Backend (Codey).
+- Establish a minimal CI pipeline to install, test, and lint on each commit.
+
+Scope
+- Backend: User API routes (GET /users, POST /users, GET /users/:id) with validation and error handling.
+- QA: Security audit tests for input validation, SQL injection resistance, and error handling.
+- DevOps: Lightweight CI workflow to run install, tests, and lint.
+- Documentation: API contract and security audit rubric.
 
 Assumptions
-- Maximum active workers in this sprint: 4 (to align with orchestration rules)
-- Jokes will be stored in a SQLite database for simplicity and portability. Access via a lightweight Express API.
-- We will operate in batches to avoid overload and ensure quality checks.
+- Node.js runtime is available; SQLite database file path is configured for development.
+- No authentication middleware required for MVP; focus on parameter safety and error handling.
+- Tests will be run in a Node.js environment with a test runner (e.g., Jest) configured in package.json.
 
-System Architecture (high level)
-- Joke Generator Engine (backend_dev)
-  - Generates jokes from templates and word lists using seeds for reproducibility.
-  - Exposes a batch generator to create N jokes per run.
-- Joke Store (storage.js)
-  - Lightweight DB layer: init schema, insert jokes, query jokes.
-- API Layer (api/app.js)
-  - Endpoints to trigger generation and fetch jokes:
-    - POST /generate-jokes
-    - GET /jokes
-    - GET /jokes/:id
-- QA & Validation (qa_engineer)
-  - Validate data integrity, duplicates, and performance at scale.
-- Deployment & Ops (devops)
-  - Provide containerization, basic CI hints, and runbook.
-- Documentation (tech_writer)
-  - API docs, user guide, and runbook.
+Deliverables
+- Backend: scratch/shared/src/users.js implementing the API.
+- QA: scratch/shared/tests/users.test.js containing security audit tests.
+- DevOps: scratch/shared/.github/workflows/ci.yml for CI.
+- Documentation: scratch/shared/docs/API_README.md and scratch/shared/docs/SECURITY_AUDIT_RUBRIC.md.
+- Lint/Config: ESLint config at scratch/shared/.eslintrc.json and related tooling in package.json.
 
-Files & Functions to be Created (Full, Working Implementations)
-- scratch/shared/src/joke_templates.js
-  - Exports TEMPLATE_SETS or similar structures for joke templates.
-- scratch/shared/src/generator.js
-  - function generateJoke(seed, templates) -> string
-  - function generateBatch(count, seedBase, templates) -> string[]
-- scratch/shared/src/storage.js
-  - class JokeStore
-  - async init()
-  - async addJoke(text, category, seed)
-  - async getJokes(offset, limit)
-  - async getJoke(id)
-- scratch/shared/api/app.js
-  - Express app setup
-  - POST /generate-jokes
-  - GET /jokes
-  - GET /jokes/:id
-  - Basic error handling
-- scratch/shared/config.js
-  - TOTAL_JOKES = 100000
-  - BATCH_SIZE = 2500
-  - DB_PATH = 'sqlite3.db'
-  - SEED_BASE_DEFAULT
-- scratch/shared/docs/API_DOCS.md
-  - Endpoint descriptions, request/response examples
-- scratch/shared/tests/generator_smoke_test.js
-  - Basic concurrency test scaffolding
-- scratch/shared/runbooks/ops.md
-  - How to run generation in batch, monitor progress
+Files & Ownership
+- scratch/shared/src/users.js
+  - Owner: Codey McBackend
+  - Endpoints: GET /users, POST /users, GET /users/:id
+  - Tech: Express, SQLite
+  - Security: Input validation, parameterized queries, error handling
 
-Data Model (SQLite)
-- JOKES table:
-  - id INTEGER PRIMARY KEY AUTOINCREMENT
-  - text TEXT NOT NULL
-  - category TEXT
-  - created_at DATETIME
-  - seed INTEGER
-  - status TEXT (e.g., "generated", "verified")
+- scratch/shared/tests/users.test.js
+  - Owner: Bugsy McTester
+  - Tests: input validation, SQL injection attempts, error handling
 
-Data Flow Outline
-1) Client triggers POST /generate-jokes with { count, seed }.
-2) API delegates to generator to produce a batch of jokes (split across workers if needed).
-3) Generated jokes are persisted in the DB.
-4) Client can page through jokes via GET /jokes.
+- scratch/shared/.github/workflows/ci.yml
+  - Owner: Deployo McOps
+  - Steps: npm install, npm test, npm run lint
 
-Milestones
-- Phase 1: Skeleton API + storage + templates outline.
-- Phase 2: Batch generation, seeds, and dedup logic.
-- Phase 3: QA, load testing, and optimization.
+- scratch/shared/docs/API_README.md
+  - Owner: Docy McWriter
+  - API contract, request/response examples
+
+- scratch/shared/docs/SECURITY_AUDIT_RUBRIC.md
+  - Owner: Docy McWriter / Bugsy McTester
+  - Criteria for security audit coverage
+
+- scratch/shared/.eslintrc.json
+  - Owner: Codey McBackend / QA
+  - Linting rules for code quality
+
+Milestones & Timeline (target)
+- Week 1: Plan alignment, kickoff, and file scaffolding
+- Week 1: Implement API skeleton and validation
+- Week 1: Write security audit tests and linting rules
+- Week 2: Run security audit, fix vulnerabilities, finalize CI
+- Week 2: Documentation completed and reviewed
+
+Acceptance Criteria
+- All endpoints available with validated inputs and safe DB queries (no SQL injection vulnerability).
+- Security audit tests pass and are robust against common attack vectors.
+- CI workflow runs npm install, npm test, and npm run lint on push.
+- Documentation is complete and up-to-date.
 
 Risks & Mitigations
-- Risk: Duplicates. Mitigation: Use unique constraint on text with optional hash.
-- Risk: Generation quality. Mitigation: Run QA checks and template diversification.
-- Risk: Large resource usage. Mitigation: Throttle and batch processing with progress tracking.
+- Risk: Incomplete validation leads to SQL injection.
+  Mitigation: Use parameterized queries and input validation libraries; include tests.
+- Risk: CI configuration drift.
+  Mitigation: Centralize CI in repo and enforce lint/test pass before merge.
+
+Communication & Cadence
+- Weekly syncs; auto-notify on CI failures; plan updates via shared master plan.

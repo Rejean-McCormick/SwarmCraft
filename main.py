@@ -844,13 +844,34 @@ class InteractiveChatroom:
         # Initialize chatroom
         self.chatroom = Chatroom()
         
-        # Solo Architect Start
+        # Start with Architect and ensure Project Manager is available
         from agents import create_agent
         from config.settings import ARCHITECT_MODEL
         
         architect = create_agent("architect", model=ARCHITECT_MODEL)
         self.agents = [architect]
         await self.chatroom.initialize(self.agents)
+
+        # Spawn Checky McManager (project_manager) for CLI sessions
+        try:
+            from core.settings_manager import get_settings
+            settings = get_settings()
+            swarm_model = settings.get("swarm_model", ARCHITECT_MODEL)
+            checky = await self.chatroom.spawn_agent("project_manager", model=swarm_model)
+        except Exception:
+            checky = None
+
+        if checky:
+            self.agents.append(checky)
+        
+        # Start Traffic Control relay for visualization dashboard
+        try:
+            from core.traffic_relay import start_traffic_relay
+            self.traffic_relay = await start_traffic_relay(self.chatroom)
+            self.print_system("Traffic Control relay started on ws://localhost:8766")
+        except Exception as e:
+            self.print_system(f"Traffic Control relay failed: {e}")
+            self.traffic_relay = None
         
         # Register message callback
         self.chatroom.on_message(self.message_callback)
@@ -890,6 +911,9 @@ class InteractiveChatroom:
         except KeyboardInterrupt:
             self.print_system("Interrupted...")
         finally:
+            # Stop Traffic Control relay
+            if hasattr(self, 'traffic_relay') and self.traffic_relay:
+                await self.traffic_relay.stop()
             await self.chatroom.shutdown()
             self.print_system("Chatroom closed. Goodbye!")
 

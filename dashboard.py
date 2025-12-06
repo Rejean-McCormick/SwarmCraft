@@ -335,11 +335,8 @@ class DashboardUI:
         
         if recent:
             for msg in recent:
-                # Truncate long messages to fit panel width
-                display = msg[:32]
-                if len(msg) > 32:
-                    display += "..."
-                lines.append(display)
+                # Let Rich handle wrapping; avoid manual truncation
+                lines.append(msg)
         else:
             lines.append("Activity will appear here")
             lines.append("as agents work...")
@@ -360,10 +357,8 @@ class DashboardUI:
         
         for msg in display_messages:
             timestamp = msg.timestamp.strftime("%H:%M")
-            # Truncate content to prevent overflow
-            content = msg.content[:80]
-            if len(msg.content) > 80:
-                content += "..."
+            # Let Rich handle wrapping; avoid manual truncation here
+            content = msg.content
 
             if msg.role == MessageRole.SYSTEM:
                 lines.append(f"[{timestamp}] ⚙️ {content}")
@@ -1156,7 +1151,7 @@ class DashboardUI:
         if self.use_live_display:
             self.console.print("[yellow]Live mode enabled. Use /mode to switch if you experience issues.[/yellow]")
 
-        # Initialize chatroom with just the Architect (use singleton so tools work)
+        # Initialize chatroom with the Architect (use singleton so tools work)
         from core.chatroom import set_chatroom
         from config.settings import ARCHITECT_MODEL
 
@@ -1166,6 +1161,21 @@ class DashboardUI:
         architect = create_agent("architect", model=ARCHITECT_MODEL)
         self.agents = [architect]
         await self.chatroom.initialize(self.agents)
+
+        # Ensure Checky McManager (project_manager) is available in dashboard sessions
+        try:
+            from core.settings_manager import get_settings
+            settings = get_settings()
+            swarm_model = settings.get("swarm_model", ARCHITECT_MODEL)
+            checky = await self.chatroom.spawn_agent("project_manager", model=swarm_model)
+        except Exception:
+            checky = None
+
+        if checky:
+            self.agents.append(checky)
+            style = AGENT_STYLES.get(checky.name, "white")
+            icon = AGENT_ICONS.get(checky.name, "🤖")
+            self.console.print(f"[{style}]{icon} {checky.name}[/{style}] joined the swarm")
 
         # Register message callback
         self.chatroom.on_message(self.message_callback)

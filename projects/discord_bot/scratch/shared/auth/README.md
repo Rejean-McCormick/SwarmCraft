@@ -1,0 +1,1 @@
+Auth module handling user registration and login with JWT.

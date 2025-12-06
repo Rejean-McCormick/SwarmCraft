@@ -211,18 +211,27 @@ class WebSocketServer:
                 }))
             
             elif msg_type == "get_devplan":
-                # Read master_plan.md from scratch/shared
+                # Read devplan.md (preferred) or master_plan.md from scratch/shared
                 devplan_content = ""
-                devplan_path = Path(__file__).parent.parent / "scratch" / "shared" / "master_plan.md"
-                if devplan_path.exists():
-                    try:
+                base_dir = Path(__file__).parent.parent / "scratch" / "shared"
+                devplan_path = base_dir / "devplan.md"
+                master_plan_path = base_dir / "master_plan.md"
+
+                try:
+                    if devplan_path.exists():
                         with open(devplan_path, 'r', encoding='utf-8') as f:
                             devplan_content = f.read()
-                    except Exception:
-                        devplan_content = "[Error reading master_plan.md]"
-                else:
-                    devplan_content = "No master plan yet. The Architect will create one during planning phase."
-                
+                    elif master_plan_path.exists():
+                        with open(master_plan_path, 'r', encoding='utf-8') as f:
+                            devplan_content = f.read()
+                    else:
+                        devplan_content = (
+                            "No devplan.md or master_plan.md yet. "
+                            "Ask the Architect to create a plan and devplan dashboard for this project."
+                        )
+                except Exception:
+                    devplan_content = "[Error reading devplan/master_plan file]"
+
                 await websocket.send(json.dumps({
                     "type": "devplan",
                     "data": devplan_content

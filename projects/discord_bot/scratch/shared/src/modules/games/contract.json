@@ -1,0 +1,6 @@
+{
+  "module": "games",
+  "endpoints": {
+    "blackjack/start": {"method": "POST", "path": "/blackjack/start", "response": {"sessionId": "string"}}
+  }
+}

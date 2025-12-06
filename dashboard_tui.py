@@ -184,7 +184,8 @@ class SettingsScreen(ModalScreen):
         except: pass
         try: settings.set("temperature", float(self.query_one("#temperature-input", Input).value), auto_save=False)
         except: pass
-        try: settings.set("max_tool_depth", max(5, min(50, int(self.query_one("#tool-depth-input", Input).value))), auto_save=False)
+        # Allow deeper tool chains (up to 250) so agents can work more autonomously
+        try: settings.set("max_tool_depth", max(5, min(250, int(self.query_one("#tool-depth-input", Input).value))), auto_save=False)
         except: pass
         settings.save()
         self.dismiss(True)
@@ -210,10 +211,11 @@ class TokenDetailPanel(Static):
         
         content = Text()
         content.append("Session Totals:\n", style="bold")
-        content.append(f"  Input:  {stats.get('total_input', 0):,}\n")
-        content.append(f"  Output: {stats.get('total_output', 0):,}\n")
-        content.append(f"  Total:  {stats.get('total', 0):,}\n")
-        content.append(f"  Cost:   ${stats.get('total_cost', 0):.4f}\n")
+        # TokenTracker exposes prompt_tokens, completion_tokens, total_tokens, call_count
+        content.append(f"  Input:  {stats.get('prompt_tokens', 0):,}\n")
+        content.append(f"  Output: {stats.get('completion_tokens', 0):,}\n")
+        content.append(f"  Total:  {stats.get('total_tokens', 0):,}\n")
+        content.append(f"  Calls:  {stats.get('call_count', 0):,}\n")
         
         # Per-agent breakdown
         by_agent = stats.get('by_agent', {})
@@ -221,7 +223,8 @@ class TokenDetailPanel(Static):
             content.append("\nBy Agent:\n", style="bold")
             for agent, agent_stats in by_agent.items():
                 short_name = agent.split()[0] if agent else "?"
-                content.append(f"  {short_name}: {agent_stats.get('total', 0):,}\n")
+                total_agent_tokens = agent_stats.get("prompt", 0) + agent_stats.get("completion", 0)
+                content.append(f"  {short_name}: {total_agent_tokens:,}\n")
         
         self.update(content)
 
@@ -234,11 +237,13 @@ class AgentCard(Static):
         self.accomplishments = []
         self.tokens_used = 0
         self.current_action = ""  # Granular progress
+        self.expanded = False
+        self._max_history = 50
 
     def add_accomplishment(self, text: str):
         self.accomplishments.append(text)
-        if len(self.accomplishments) > 3:  # Keep last 3
-            self.accomplishments = self.accomplishments[-3:]
+        if len(self.accomplishments) > self._max_history:
+            self.accomplishments = self.accomplishments[-self._max_history:]
         self.refresh_display()
 
     def add_tokens(self, count: int):
@@ -250,16 +255,21 @@ class AgentCard(Static):
         self.current_action = action
         self.refresh_display()
 
+    async def on_click(self):
+        """Toggle expanded/collapsed view for this agent card."""
+        self.expanded = not self.expanded
+        self.refresh_display()
+
     def refresh_display(self):
         icon = AGENT_ICONS.get(self.agent.name, "🤖")
         
         # Status color
         if self.agent.status == AgentStatus.WORKING:
             border_style = "green"
-            title = f"{icon} {self.agent.name} (WORKING)"
+            title = f"{icon} {self.agent.name} (WORKING{' ▾' if self.expanded else ' ▸'})"
         else:
             border_style = "dim"
-            title = f"{icon} {self.agent.name} (IDLE)"
+            title = f"{icon} {self.agent.name} (IDLE{' ▾' if self.expanded else ' ▸'})"
             
         # Content construction
         content = Text()
@@ -273,14 +283,20 @@ class AgentCard(Static):
         
         # Task
         task = getattr(self.agent, 'current_task_description', '')
-        if task and task != "No task":
-            content.append("\nTask:\n", style="bold yellow")
+        content.append("\nTask:\n", style="bold yellow")
+        if task:
             content.append(f"{task}\n")
+        else:
+            content.append("No task assigned\n", style="dim")
         
         # Accomplishments
         if self.accomplishments:
             content.append("\nLatest:\n", style="bold white")
-            for acc in self.accomplishments:
+            if self.expanded:
+                items = self.accomplishments[-self._max_history:]
+            else:
+                items = self.accomplishments[-3:]
+            for acc in items:
                 content.append(f"✓ {acc}\n", style="green")
         
         # Update with a panel
@@ -297,20 +313,25 @@ class DevPlanPanel(Static):
     def refresh_plan(self):
         """Load the master plan from file."""
         try:
+            devplan_path = get_scratch_dir() / "shared" / "devplan.md"
             plan_path = get_scratch_dir() / "shared" / "master_plan.md"
             todo_path = get_scratch_dir() / "shared" / "todo.md"
             
             content_parts = []
             
-            if plan_path.exists():
+            # Prefer live devplan dashboard if present
+            if devplan_path.exists():
+                content = devplan_path.read_text(encoding='utf-8')
+                content_parts.append(content)
+            elif plan_path.exists():
                 content = plan_path.read_text(encoding='utf-8')
                 content_parts.append(content)
             else:
                 content_parts.append(
-                    "No master_plan.md yet.\n\n"
+                    "No devplan.md or master_plan.md yet.\n\n"
                     "Ask the Architect:\n"
-                    "  'Create a plan for [your project]'\n\n"
-                    "The plan will appear here."
+                    "  'Create a plan and devplan dashboard for [your project]'\n\n"
+                    "The plan and dashboard will appear here."
                 )
             
             if todo_path.exists():
@@ -698,10 +719,12 @@ class SwarmDashboard(App):
         Binding("f1", "show_help", "Help"),
     ]
 
-    def __init__(self, project: Project, username: str = "You"):
+    def __init__(self, project: Project, username: str = "You", load_history: bool = True):
         super().__init__()
         self.project = project
         self.username = username
+        # Whether to load prior chat history from disk on startup
+        self.load_history = load_history
         self.chatroom: Optional[Chatroom] = None
         self.agents = []
         self.agent_cards: Dict[str, AgentCard] = {}
@@ -764,7 +787,8 @@ class SwarmDashboard(App):
 
     async def init_chatroom(self):
         settings = get_settings()
-        self.chatroom = Chatroom()
+        # Respect user preference for loading previous history
+        self.chatroom = Chatroom(load_history=self.load_history)
         set_chatroom(self.chatroom)
         self.chatroom.on_tool_call = self.on_tool_call
 
@@ -772,7 +796,28 @@ class SwarmDashboard(App):
         architect = create_agent("architect", model=model)
         self.agents = [architect]
         await self.chatroom.initialize(self.agents)
+
+        # Ensure Checky McManager (project_manager) is present in dashboard sessions
+        try:
+            swarm_model = settings.get("swarm_model", ARCHITECT_MODEL)
+            checky = await self.chatroom.spawn_agent("project_manager", model=swarm_model)
+        except Exception:
+            checky = None
+
+        if checky:
+            self.agents.append(checky)
+            self.create_agent_card(checky)
+            self.chat_log.write(Text("📊 Checky McManager joined the swarm", style="green"))
         self.chatroom.on_message(self.on_chat_message)
+        
+        # Start Traffic Control relay for visualization dashboard
+        try:
+            from core.traffic_relay import start_traffic_relay
+            self.traffic_relay = await start_traffic_relay(self.chatroom)
+            self.chat_log.write(Text("📡 Traffic Control relay started on ws://localhost:8766", style="blue"))
+        except Exception as e:
+            self.chat_log.write(Text(f"⚠️ Traffic Control relay failed: {e}", style="yellow"))
+            self.traffic_relay = None
 
         # Create agent card
         self.create_agent_card(architect)
@@ -802,7 +847,8 @@ class SwarmDashboard(App):
         text = Text()
         text.append(f"[{timestamp}] ", style="dim")
         text.append(f"{agent_name.split()[0]}: ", style="cyan")
-        text.append(tool_name[:35], style="white")
+        # Show full tool action; let the panel's wrapping/scrolling handle length
+        text.append(tool_name, style="white")
         self.tools_log.write(text)
         
         # Update agent card accomplishments for write operations
@@ -1087,6 +1133,9 @@ class SwarmDashboard(App):
         await self.action_stop_current()
 
     async def action_quit(self):
+        # Stop Traffic Control relay
+        if hasattr(self, 'traffic_relay') and self.traffic_relay:
+            await self.traffic_relay.stop()
         if self.chatroom:
             await self.chatroom.shutdown()
         self.exit()
@@ -1096,7 +1145,7 @@ class SwarmDashboard(App):
 # PROJECT SELECTION & MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 
-def select_project_cli() -> tuple[Project, str]:
+def select_project_cli() -> tuple[Project, str, bool]:
     """CLI project selection before launching TUI."""
     from rich.console import Console
     from rich.panel import Panel
@@ -1147,11 +1196,24 @@ def select_project_cli() -> tuple[Project, str]:
     else:
         username = saved_username
 
+    # Ask whether to load previous chat history for this project
+    default_load = settings.get("load_previous_history", True)
+    default_label = "Y/n" if default_load else "y/N"
+    choice = input(f"Load previous messages? [{default_label}]: ").strip().lower()
+    if choice in ("y", "yes"):
+        load_history = True
+    elif choice in ("n", "no"):
+        load_history = False
+    else:
+        load_history = default_load
+
+    settings.set("load_previous_history", load_history)
+
     console.print()
     console.print("[dim]Starting dashboard... (Ctrl+Q to quit)[/dim]")
     console.print()
 
-    return project, username[:20]
+    return project, username[:20], load_history
 
 
 def main():
@@ -1171,8 +1233,8 @@ def main():
             print(f"Error: {error}")
         return
 
-    project, username = select_project_cli()
-    app = SwarmDashboard(project=project, username=username)
+    project, username, load_history = select_project_cli()
+    app = SwarmDashboard(project=project, username=username, load_history=load_history)
     app.run()
 
 

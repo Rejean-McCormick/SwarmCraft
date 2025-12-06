@@ -1,0 +1,6 @@
+{
+  "module": "wallet",
+  "endpoints": {
+    "balance": {"method": "GET", "path": "/balance", "response": {"balance": "integer"}}
+  }
+}

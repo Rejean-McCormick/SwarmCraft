@@ -257,5 +257,158 @@ Added verbose API request/response logging in the TUI:
 
 ---
 
-*Last updated: December 5, 2024*
-*Status: Core orchestration fixed, Textual TUI enhanced with API logging, tool depth at 50*
+## Latest Updates (December 6, 2025)
+
+### 1. Worker / User Interaction & Logging
+
+**Problem**: Worker agents sometimes tried to answer the human directly or duplicated the Architect's work.
+
+**Solution**:
+- Tightened all worker system prompts (`backend_dev.py`, `frontend_dev.py`, `qa_engineer.py`, `devops_engineer.py`, `project_manager.py`, `tech_writer.py`) with an explicit **Interaction Rules** section:
+  - Workers **never** speak directly to the human.
+  - They treat `user` messages as requirements routed through Bossy McArchitect.
+  - Their responses are framed as status updates and technical details for the Architect and other agents.
+- Updated `agents/architect.py` to clarify that **Bossy McArchitect is the only agent that talks to the human user**.
+- Updated `agents/base_agent.py` so that non-Architect agents mark their chat output as `MessageType.AGENT_LOG` instead of normal chat, keeping worker chatter clearly separated from user-facing conversation.
+- Added `AGENT_LOG` to `core/models.py::MessageType`.
+
+### 2. Role-Aware Context Trimming
+
+**Problem**: Agents received a blunt "last 10 messages" slice of global history, which often included stale topics and other agents' replies. This caused multiple agents to work on the same thing and increased token usage.
+
+**Solution** (`agents/base_agent.py::_build_context`):
+- Still builds an enhanced system prompt (persona, tools, memories, current task).
+- **Architect**:
+  - Continues to see the normal recent tail of global messages (last ~10) for full situational awareness.
+- **Workers**:
+  - Build a **task-focused** history view:
+    - Always include the latest human message (requirements).
+    - Include the worker's own recent messages.
+    - Include system messages that mention the worker by name (join/assignment notices).
+    - Fallback to the plain recent tail only if no relevant messages are found.
+- Result: workers focus on their assignment and the latest user intent instead of re-reading every prior message from other agents.
+
+### 3. Startup History Toggle
+
+**Problem**: On startup, the chatroom always loaded recent history from disk. Old threads sometimes bled into new sessions, and agents kept pulling in stale context.
+
+**Solution**:
+- Added a new persistent setting in `core/settings_manager.py`:
+  - `load_previous_history` (default `True`) controls whether prior chat history is loaded.
+- Extended `dashboard_tui.py`:
+  - `select_project_cli()` now asks:
+    - `Load previous messages? [Y/n]` (or `y/N` based on your last choice).
+  - The answer is saved back into `load_previous_history`.
+  - Returns `(project, username, load_history)` and passes `load_history` into `SwarmDashboard`.
+  - `SwarmDashboard.__init__` stores `self.load_history`, and `init_chatroom()` builds `Chatroom(load_history=self.load_history)`.
+- Extended `core/chatroom.py`:
+  - `Chatroom.__init__(load_history: bool = True)` stores `self._load_history_on_init`.
+  - `Chatroom.initialize()` only calls `_load_history()` when `self._load_history_on_init` is `True`.
+- Behavior:
+  - Answer **No** to start with a clean slate (no prior messages loaded).
+  - Answer **Yes** to resume from the previous conversation for that project.
+
+### 4. Token Panel Compatibility Fix
+
+**Problem**: After `core/token_tracker.py` was updated to expose `prompt_tokens`, `completion_tokens`, `total_tokens`, and `call_count`, the TUI token panel still looked for older field names and stopped updating visibly.
+
+**Solution** (`dashboard_tui.py::TokenDetailPanel`):
+- Session totals now read:
+  - `prompt_tokens` → "Input"
+  - `completion_tokens` → "Output"
+  - `total_tokens` → "Total"
+  - `call_count` → "Calls"
+- Per-agent breakdown now sums `prompt` + `completion` from `by_agent` instead of relying on a non-existent `total` field.
+- Net effect: the top-right TOKENS panel and per-agent token counts in the TUI now accurately reflect current usage again.
+
+### 5. Quick Testing Checklist for These Changes
+
+- [ ] Start the TUI, choose a project, and answer **No** to "Load previous messages?":
+  - Verify the conversation starts clean and workers don't reference old threads.
+- [ ] Start again and answer **Yes**:
+  - Verify recent messages are restored once (no duplicated history slices).
+- [ ] Send a few messages and watch the conversation:
+  - Only **Bossy McArchitect** should reply directly to you.
+  - Worker agents should communicate as logs/status updates, not as chatty replies to the human.
+- [ ] Open the TOKENS panel:
+  - Confirm Input/Output/Total/Calls increase as agents make API calls.
+  - Confirm per-agent totals increase appropriately for active agents.
+- [ ] Inspect the logs:
+  - Worker API requests should show trimmed, task-focused `messages` arrays (latest human message + assignments/own messages), not the full global history.
+
+---
+
+## Latest Updates (December 6, 2025 - DevPlan & Parallel Swarm)
+
+### 6. DevPlan Dashboard & Project Manager (Checky McManager)
+
+**Problem**: The plan lived only in `master_plan.md` and quickly drifted from reality. There was no single, live view of per-agent tasks, statuses, and blockers.
+
+**Solution**:
+- Introduced a **live DevPlan dashboard** in `scratch/shared/devplan.md` generated from swarm state.
+- Added an `update_devplan_dashboard` tool in `core/agent_tools.py` that:
+  - Reads all tasks from `TaskManager` and active agents from `Chatroom`.
+  - Builds a Markdown dashboard with:
+    - Overall stats (agent/task counts, status counts).
+    - "Tasks by Agent" section with `- [ ]` / `- [x]` checkboxes and emojis for status.
+    - "Blockers & Risks" section listing failed tasks with ⚠️.
+  - Writes the result to `scratch/shared/devplan.md`.
+- Updated **Bossy McArchitect**'s prompt to:
+  - Treat `devplan.md` as the live dashboard.
+  - Use `get_swarm_state()` and `update_devplan_dashboard` to keep it in sync when tasks are assigned/completed/failed.
+- Updated **Checky McManager** (Project Manager) to:
+  - Use `get_swarm_state()` and plan/status files (`devplan.md`, `status_report.md`, `blockers.md`, `timeline.md`, `decisions.md`).
+  - Produce structured, Markdown status reports for Bossy + the other agents.
+  - Never talk directly to the human; everything is logged as progress/blockers for the Architect.
+
+### 7. Parallel Swarm Execution & Visibility
+
+**Problem**: Agents effectively ran in a serial queue. It often looked like “nothing is happening” even when multiple workers were busy with tools/API calls.
+
+**Solution** (`core/chatroom.py`):
+- Reworked `run_conversation_round` to:
+  - Collect all agents that `should_respond()` this round (Architect + workers + Checky).
+  - Broadcast `⏳ {AgentName} is thinking...` for each speaker.
+  - Launch `_get_agent_response(agent)` concurrently for all of them using `asyncio.create_task` + `asyncio.wait`.
+  - Still respect `MAX_CONCURRENT_API_CALLS` via the existing semaphore.
+- Reworked `_run_worker_round` to:
+  - Do the same parallel pattern specifically for workers with `status == WORKING`.
+  - Broadcast `⏳ {worker} is working on task...` before starting tool/API work.
+- Net effect: multiple agents now do tool work in parallel, and status messages make that visible.
+
+### 8. TUI Agent Cards: Scrollable, Expandable, Task-Aware
+
+**Problem**: The top-left AGENTS panel:
+- Didn’t clearly show current tasks.
+- Only showed the last 3 accomplishments with no way to drill deeper.
+- Became cramped when many agents were present.
+
+**Solution** (`dashboard_tui.py::AgentCard`):
+- Agent cards now track a bounded history of accomplishments (up to 50 entries).
+- New `expanded` flag and click behavior:
+  - Clicking a card toggles between collapsed (last 3 items) and expanded (up to 50).
+  - Card title shows `▸` / `▾` to indicate collapsed/expanded.
+- Task display is always present:
+  - `Task:` section always shown.
+  - Shows `current_task_description` when available, otherwise `No task assigned` (dimmed).
+- The AGENTS panel (`ScrollableContainer("#agents-scroll")`) remains scrollable; combined with shorter default cards + expand-on-click, it behaves much better with many workers.
+
+### 9. Increased Tool Call Depth (100 → 250)
+
+**Problem**: Even with higher limits than the original 5, complex multi-file tasks could still hit the tool depth ceiling prematurely.
+
+**Solution**:
+- `core/settings_manager.py`:
+  - `DEFAULT_SETTINGS["max_tool_depth"]` increased from 100 to **250**.
+- `dashboard_tui.py` (Settings → Advanced):
+  - `max_tool_depth` input now clamps to the range **5–250** when saving.
+- `agents/base_agent.py::_handle_tool_calls`:
+  - Still reads `max_tool_depth` from settings; with new defaults, agents can chain up to 250 tools before pausing.
+
+**Behavior**:
+- New sessions default to 250 unless `data/settings.json` overrides it.
+- When the limit is reached, agents still stop and tell the user they hit the cap and may need to be asked to continue.
+
+---
+*Last updated: December 6, 2025*
+*Status: DevPlan dashboard + Checky PM online, parallel swarm execution, richer TUI agent visibility, deeper tool chains enabled*

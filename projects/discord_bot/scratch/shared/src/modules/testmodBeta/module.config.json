@@ -1,0 +1,4 @@
+{
+  "module": "testmodBeta",
+  "apis": [ { "path": "/echo", "method": "POST" } ]
+}

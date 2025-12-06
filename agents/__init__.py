@@ -36,8 +36,10 @@ DISPLAY_NAME_TO_ROLE = {
 }
 
 # Default set of agents for the chatroom
+# Architect orchestrates, Checky tracks progress, others build/test.
 DEFAULT_AGENTS = [
     "architect",
+    "project_manager",
     "backend_dev",
     "frontend_dev",
     "qa_engineer",

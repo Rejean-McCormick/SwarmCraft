@@ -206,6 +206,7 @@ class AgentToolExecutor:
             "spawn_worker": self._spawn_worker,
             "assign_task": self._assign_task,
             "get_swarm_state": self._get_swarm_state,
+            "update_devplan_dashboard": self._update_devplan_dashboard,
         }
         
         if tool_name not in tool_map:
@@ -657,6 +658,102 @@ class AgentToolExecutor:
                 "agents": agents,
                 "tasks": tasks
             }
+        }
+
+    async def _update_devplan_dashboard(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate and write a Markdown devplan dashboard from current swarm state."""
+        from core.task_manager import get_task_manager
+        from core.chatroom import get_chatroom
+
+        tm = get_task_manager()
+        chatroom = await get_chatroom()
+
+        tasks = tm.get_all_tasks()
+        agents = list(chatroom._agents.values())
+
+        # Index agents by id for quick lookup
+        agents_by_id = {a.agent_id: a for a in agents}
+
+        # Basic task stats
+        status_counts: Dict[str, int] = {"pending": 0, "in_progress": 0, "completed": 0, "failed": 0}
+        for t in tasks:
+            key = getattr(t.status, "value", str(t.status))
+            if key in status_counts:
+                status_counts[key] += 1
+
+        # Group tasks by agent
+        tasks_by_agent: Dict[str, list] = {}
+        for t in tasks:
+            owner = agents_by_id.get(t.assigned_to).name if t.assigned_to in agents_by_id else "Unassigned"
+            tasks_by_agent.setdefault(owner, []).append(t)
+
+        # Build Markdown dashboard
+        lines: list[str] = []
+        lines.append("# DevPlan Dashboard")
+        lines.append("")
+        lines.append("## Overall Status")
+        lines.append("")
+        lines.append(f"- Active agents: {len(agents)}")
+        total_tasks = len(tasks)
+        lines.append(f"- Total tasks: {total_tasks}")
+        if total_tasks:
+            lines.append(f"  - Pending: {status_counts['pending']}")
+            lines.append(f"  - In Progress: {status_counts['in_progress']}")
+            lines.append(f"  - Completed: {status_counts['completed']}")
+            lines.append(f"  - Failed: {status_counts['failed']}")
+
+        lines.append("")
+        lines.append("## Tasks by Agent")
+        lines.append("")
+
+        if not tasks:
+            lines.append("No tasks have been created yet.")
+        else:
+            # Stable order: Architect and then others by name
+            agent_names = sorted(tasks_by_agent.keys(), key=lambda n: ("Bossy McArchitect" not in n, n))
+            for name in agent_names:
+                lines.append(f"### {name}")
+                for t in tasks_by_agent[name]:
+                    status = getattr(t.status, "value", str(t.status))
+                    checked = "x" if status == "completed" else " "
+                    icon = "✅" if status == "completed" else ("⏳" if status == "pending" else ("🔄" if status == "in_progress" else "❌"))
+                    short_id = t.id.split("-")[0]
+                    desc = t.description.strip().replace("\n", " ")
+                    if len(desc) > 120:
+                        desc = desc[:117] + "..."
+                    lines.append(f"- [{checked}] {icon} ({short_id}) {desc}")
+                lines.append("")
+
+        lines.append("## Blockers & Risks")
+        lines.append("")
+        blockers = [t for t in tasks if getattr(t.status, "value", str(t.status)) == "failed"]
+        if not blockers:
+            lines.append("- None currently recorded. If something is blocked, describe it here so the human can help.")
+        else:
+            for t in blockers:
+                short_id = t.id.split("-")[0]
+                desc = (t.result or t.description).strip().replace("\n", " ")
+                if len(desc) > 160:
+                    desc = desc[:157] + "..."
+                lines.append(f"- ⚠️ ({short_id}) {desc}")
+
+        content = "\n".join(lines) + "\n"
+
+        # Write to shared/devplan.md
+        write_result = await self._write_file({
+            "path": "shared/devplan.md",
+            "content": content,
+        })
+
+        if not write_result.get("success"):
+            return {"success": False, "error": write_result.get("error", "Failed to write devplan.md")}
+
+        return {
+            "success": True,
+            "result": {
+                "message": "Devplan dashboard updated",
+                "path": "shared/devplan.md",
+            },
         }
 
     async def _append_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -1222,27 +1319,72 @@ TOOL_DEFINITIONS = [
                 }
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_devplan_dashboard",
+            "description": "Regenerate the live devplan dashboard (devplan.md) from current agents and tasks. Use this to keep the project dashboard in sync as work progresses.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
     }
 ]
 
 
 # Orchestrator-only tools (for Architect)
-ORCHESTRATOR_TOOL_NAMES = {"spawn_worker", "assign_task", "get_swarm_state", "read_file", "write_file", "list_files", "get_project_structure"}
+ORCHESTRATOR_TOOL_NAMES = {
+    "spawn_worker",
+    "assign_task",
+    "get_swarm_state",
+    "read_file",
+    "write_file",
+    "list_files",
+    "get_project_structure",
+    "update_devplan_dashboard",
+}
 
 ORCHESTRATOR_TOOLS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] in ORCHESTRATOR_TOOL_NAMES]
 
 # Worker tools (everything except orchestration)
-WORKER_TOOL_NAMES = {"read_file", "write_file", "edit_file", "replace_in_file", "list_files", "delete_file", "move_file", 
-                     "create_folder", "search_code", "run_command", "claim_file", "release_file", 
-                     "get_file_locks", "append_file", "get_project_structure"}
+WORKER_TOOL_NAMES = {
+    "read_file",
+    "write_file",
+    "edit_file",
+    "replace_in_file",
+    "list_files",
+    "delete_file",
+    "move_file",
+    "create_folder",
+    "search_code",
+    "run_command",
+    "claim_file",
+    "release_file",
+    "get_file_locks",
+    "append_file",
+    "get_project_structure",
+    "scaffold_project",
+}
 
 WORKER_TOOLS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] in WORKER_TOOL_NAMES]
 
 
 def get_tools_for_agent(agent_name: str) -> list:
     """Get the appropriate tool set for an agent based on their role."""
+    # Architect gets full orchestration + dashboard tools
     if "Architect" in agent_name:
         return ORCHESTRATOR_TOOLS
+    # Project Manager can see swarm state for reporting, but cannot orchestrate
+    lowered = agent_name.lower()
+    if "checky mcmanager" in lowered or "project_manager" in lowered:
+        pm_tools = list(WORKER_TOOLS)
+        swarm_tool = next((t for t in TOOL_DEFINITIONS if t["function"]["name"] == "get_swarm_state"), None)
+        if swarm_tool and swarm_tool not in pm_tools:
+            pm_tools.append(swarm_tool)
+        return pm_tools
     return WORKER_TOOLS
 
 

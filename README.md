@@ -8,11 +8,13 @@ A multi-agent AI development system where specialized AI agents collaborate to b
 ## Features
 
 - **7 Specialized AI Agents** - Each with distinct roles and personalities
-- **True Orchestration** - Architect delegates, workers execute (no micromanagement)
-- **Role-Based Tools** - Architect gets orchestration tools, workers get coding tools
-- **Rich Terminal Dashboard** - Real-time view of agents, tasks, tokens, and activity
+- **True Orchestration** - Architect delegates, workers execute (no micromanagement). Only the Architect speaks directly to you; worker agents report status and results back to the Architect.
+- **Role-Based Tools** - Architect + Project Manager get orchestration tools, workers get coding tools
+- **Live DevPlan Dashboard** - `scratch/shared/devplan.md` shows per-agent tasks, checkboxes, and blockers kept in sync with swarm state
+- **Rich Terminal Dashboard** - Real-time view of agents, tasks, tokens, tools, and activity
 - **Persistent Settings** - Preferences saved between sessions
 - **Multi-Project Support** - Isolated workspaces for each project
+- **History Control** - Optional "Load previous messages?" prompt per project so you can start from a clean slate or resume prior context
 
 ## Agent Roster
 
@@ -49,16 +51,16 @@ python main.py --cli
 ## How It Works
 
 ### Phase 1: Planning
-1. Start the dashboard - only the Architect joins initially
+1. Start the dashboard, select your project and username, and choose whether to load previous messages – only the Architect joins initially
 2. Describe your project to the Architect
-3. The Architect creates a master plan in `scratch/shared/master_plan.md`
-4. Review and say "Go" to proceed
+3. The Architect creates a master plan in `scratch/shared/master_plan.md` and an initial DevPlan dashboard in `scratch/shared/devplan.md` (checklist with owners and blockers)
+4. Review the plan/devplan and say "Go" to proceed
 
 ### Phase 2: Execution
-1. Architect spawns workers (backend_dev, frontend_dev, etc.)
+1. Architect spawns workers (backend_dev, frontend_dev, etc.) and ensures Checky McManager (Project Manager) is in the swarm
 2. Architect assigns specific tasks to each worker
 3. Workers write code to `scratch/shared/` using their tools
-4. Architect monitors progress via `get_swarm_state()`
+4. Architect and Checky monitor progress via `get_swarm_state()` and keep `devplan.md` and status files up to date
 
 ### Phase 3: Delivery
 1. QA reviews and tests the code
@@ -114,7 +116,7 @@ The Textual TUI (`--tui`) features a 3-column layout:
 **Right Column:**
 - Token usage panel (totals and per-agent breakdown)
 - Tool calls panel (real-time tool activity)
-- DevPlan panel (scrollable master plan view)
+- DevPlan panel (scrollable `devplan.md` dashboard with master plan and todo view)
 
 ## Architecture
 
@@ -122,13 +124,13 @@ The Textual TUI (`--tui`) features a 3-column layout:
 
 The system uses role-based tool access to enforce proper orchestration:
 
-**Orchestrator Tools** (Architect only):
+**Orchestrator / PM Tools** (Architect + Project Manager):
 - `spawn_worker` - Bring in team members
 - `assign_task` - Delegate work to workers
-- `get_swarm_state` - Check agent/task status
-- `read_file`, `write_file` - For master plan only
+- `get_swarm_state` - Check agent/task status and drive devplan/status reporting
+- `read_file`, `write_file` - For plans and dashboards only (e.g. `master_plan.md`, `devplan.md`, `status_report.md`, `blockers.md`, `timeline.md`, `decisions.md`)
 
-**Worker Tools** (All other agents):
+**Worker Tools** (Backend/Frontend/QA/DevOps/Tech Writer):
 - `read_file`, `write_file`, `edit_file` - Code operations
 - `list_files`, `search_code` - Navigation
 - `run_command` - Safe shell commands
@@ -138,15 +140,15 @@ This ensures the Architect delegates work instead of doing it all.
 
 ### Conversation Flow
 
-1. User sends message → Architect responds
-2. Architect spawns workers and assigns tasks
-3. Workers execute tasks (with configurable tool call depth, default 15)
-4. Workers report completion
-5. Architect assigns next tasks or reviews
+1. You send a message → **only Bossy McArchitect responds directly to you**.
+2. Architect spawns workers and assigns tasks.
+3. Workers execute tasks (with configurable tool call depth, default 250) and log progress/results back to the Architect and Checky (not to the human user).
+4. Architect reviews worker/PM output and responds to you or assigns next tasks.
+5. Repeat until the project is complete.
 
 ### Tool Call Depth
 
-Agents can chain multiple tool calls when working on complex tasks. The default limit is 50 consecutive tool calls, configurable in Settings → Advanced → Max Tool Depth. This allows agents to:
+Agents can chain multiple tool calls when working on complex tasks. The default limit is 250 consecutive tool calls, configurable in Settings → Advanced → Max Tool Depth. This allows agents to:
 - Write multiple files in sequence
 - Read, modify, and save files
 - Create folder structures
@@ -193,7 +195,8 @@ Settings in `data/settings.json` (also accessible via Ctrl+S in TUI):
 | `swarm_model` | `openai/gpt-5-nano` | Model for worker agents |
 | `max_tokens` | `100000` | Max tokens per response |
 | `temperature` | `0.8` | Response creativity (0-1) |
-| `max_tool_depth` | `50` | Max consecutive tool calls per turn |
+| `max_tool_depth` | `250` | Max consecutive tool calls per turn |
+| `load_previous_history` | `true` | Whether to load prior chat history on TUI startup (prompted at project selection) |
 
 ## Token Tracking
 

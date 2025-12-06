@@ -41,8 +41,12 @@ class Chatroom:
     - Message broadcasting to external listeners
     """
     
-    def __init__(self):
-        """Initialize the chatroom."""
+    def __init__(self, load_history: bool = True):
+        """Initialize the chatroom.
+
+        Args:
+            load_history: Whether to load prior chat history from disk on init.
+        """
         self.state = ChatroomState()
         self._agents: Dict[str, BaseAgent] = {}
         self._message_callbacks: List[Callable[[Message], None]] = []
@@ -51,6 +55,8 @@ class Chatroom:
         self._conversation_task: Optional[asyncio.Task] = None
         # Optional callback for tool calls: (agent_name, tool_name, result_summary)
         self.on_tool_call: Optional[Callable[[str, str, str], None]] = None
+        # Control whether history is loaded from disk during initialize
+        self._load_history_on_init = load_history
     
     async def initialize(self, agents: Optional[List[BaseAgent]] = None):
         """
@@ -65,8 +71,9 @@ class Chatroom:
         for agent in agents:
             await self.add_agent(agent)
         
-        # Load previous history if exists
-        await self._load_history()
+        # Load previous history if requested and it exists
+        if self._load_history_on_init:
+            await self._load_history()
         
         logger.info(f"Chatroom initialized with {len(self._agents)} agents")
     
@@ -350,36 +357,57 @@ class Chatroom:
         
         # Get list of agents (Architect first, then others)
         agents = list(self._agents.values())
-        # Sort so Architect is always processed, but others are shuffled for fairness
         architects = [a for a in agents if "Architect" in a.__class__.__name__]
         workers = [a for a in agents if "Architect" not in a.__class__.__name__]
         random.shuffle(workers)
         ordered_agents = architects + workers
-        
-        round_messages = []
-        
+
+        round_messages: List[Message] = []
+
+        # Decide who actually wants to speak this round (strict orchestration still applies)
+        speakers: List[BaseAgent] = []
         for agent in ordered_agents:
-            # Check if agent wants to speak (enforces strict orchestration)
-            if not agent.should_respond():
-                continue
-            
-            # Announce agent is thinking
+            try:
+                if agent.should_respond():
+                    speakers.append(agent)
+            except Exception as e:
+                logger.error(f"Error in should_respond for {agent.name}: {e}")
+
+        if not speakers:
+            logger.info("No agents chose to respond this round")
+            return []
+
+        # Announce that these agents are thinking, so the UI shows activity immediately
+        for agent in speakers:
             await self._broadcast_status(f"⏳ {agent.name} is thinking...")
-            
-            # Add delay for natural flow
-            if round_messages:
-                await asyncio.sleep(2.0)
-            
-            response = await self._get_agent_response(agent)
-            
-            if response is not None:
-                await self._broadcast_message(response)
-                round_messages.append(response)
-                
-                # Notify other agents about this message
-                for other_agent in self._agents.values():
-                    if other_agent.agent_id != response.sender_id:
-                        await other_agent.process_incoming_message(response)
+
+        # Kick off API/tool work in parallel, bounded by MAX_CONCURRENT_API_CALLS via _get_agent_response
+        tasks = {asyncio.create_task(self._get_agent_response(agent)): agent for agent in speakers}
+
+        while tasks:
+            done, _ = await asyncio.wait(
+                set(tasks.keys()),
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in done:
+                agent = tasks.pop(task, None)
+                if agent is None:
+                    continue
+                try:
+                    response = task.result()
+                except Exception as e:
+                    logger.error(f"Error getting response from {agent.name}: {e}")
+                    continue
+
+                if response is not None:
+                    await self._broadcast_message(response)
+                    round_messages.append(response)
+
+                    # Notify other agents about this message
+                    for other_agent in self._agents.values():
+                        if other_agent.agent_id != response.sender_id:
+                            await other_agent.process_incoming_message(response)
         
         # Log round summary
         agent_summary = ", ".join([f"{a.name}:{a.status.value}" for a in self._agents.values()])
@@ -404,28 +432,52 @@ class Chatroom:
         return round_messages
     
     async def _run_worker_round(self, workers: List[BaseAgent]) -> List[Message]:
-        """Run a round specifically for workers with assigned tasks."""
-        worker_messages = []
-        
+        """Run a round specifically for workers with assigned tasks, in parallel."""
+        worker_messages: List[Message] = []
+
+        # Filter to workers that actually want to respond
+        active_workers: List[BaseAgent] = []
         for worker in workers:
-            if not worker.should_respond():
-                continue
-            
+            try:
+                if worker.should_respond():
+                    active_workers.append(worker)
+            except Exception as e:
+                logger.error(f"Error in should_respond for {worker.name}: {e}")
+
+        if not active_workers:
+            return worker_messages
+
+        # Broadcast that workers are actively processing tasks
+        for worker in active_workers:
             await self._broadcast_status(f"⏳ {worker.name} is working on task...")
-            
-            response = await self._get_agent_response(worker)
-            
-            if response is not None:
-                await self._broadcast_message(response)
-                worker_messages.append(response)
-                
-                # Notify other agents
-                for other_agent in self._agents.values():
-                    if other_agent.agent_id != response.sender_id:
-                        await other_agent.process_incoming_message(response)
-                
-                await asyncio.sleep(1.0)
-        
+
+        tasks = {asyncio.create_task(self._get_agent_response(worker)): worker for worker in active_workers}
+
+        while tasks:
+            done, _ = await asyncio.wait(
+                set(tasks.keys()),
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            for task in done:
+                worker = tasks.pop(task, None)
+                if worker is None:
+                    continue
+                try:
+                    response = task.result()
+                except Exception as e:
+                    logger.error(f"Error getting response from {worker.name}: {e}")
+                    continue
+
+                if response is not None:
+                    await self._broadcast_message(response)
+                    worker_messages.append(response)
+
+                    # Notify other agents
+                    for other_agent in self._agents.values():
+                        if other_agent.agent_id != response.sender_id:
+                            await other_agent.process_incoming_message(response)
+
         return worker_messages
     
     async def start_conversation(

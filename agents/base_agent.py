@@ -46,6 +46,7 @@ from core.summarizer import ConversationMemoryManager
 from core.agent_tools import AgentToolExecutor, TOOL_DEFINITIONS, get_tools_system_prompt, get_tools_for_agent
 from core.task_manager import get_task_manager
 from core.token_tracker import get_token_tracker
+from core.settings_manager import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class BaseAgent(ABC):
         self.speak_probability = config.speak_probability
         
         # Tools enabled by default
-        self.tools_enabled = True
+        self.tools_enabled = get_settings().get("tools_enabled", True)
         
         # Orchestration State
         self.status = AgentStatus.IDLE
@@ -150,6 +151,21 @@ class BaseAgent(ABC):
             # New human message, we should respond
             return True
             
+        # Project Manager: can speak periodically when there is active work,
+        # even without a direct task assignment, to report status and risks.
+        if "ProjectManager" in self.__class__.__name__ or "McManager" in self.name:
+            try:
+                from core.task_manager import get_task_manager
+                tm = get_task_manager()
+                tasks = tm.get_all_tasks()
+            except Exception:
+                tasks = []
+
+            if tasks:
+                # Use speak_probability as a soft throttle to avoid spam
+                return random.random() < self.speak_probability
+            return False
+
         # Workers only speak when working
         if self.status == AgentStatus.WORKING:
             return True
@@ -240,10 +256,50 @@ Keep chat responses concise and focused on the task. Use the tools for the heavy
             "content": enhanced_system_prompt
         })
         
-        # Only use last 10 messages for context (avoid stale topics)
+        # Build role-aware view of recent history
         recent_messages = global_history[-10:]
-        for msg in recent_messages:
-            messages.append(msg.to_api_format())
+        is_architect = "Architect" in self.__class__.__name__ or "Architect" in self.name
+
+        if is_architect:
+            # Architect sees the normal recent tail to reason about overall context
+            for msg in recent_messages:
+                messages.append(msg.to_api_format())
+        else:
+            # Workers: focus on their current assignment and latest human intent
+            seen_ids = set()
+            worker_context: List[Message] = []
+
+            # Always try to include the latest human message (for requirements)
+            last_human: Optional[Message] = None
+            for msg in reversed(recent_messages):
+                if msg.role == MessageRole.HUMAN:
+                    last_human = msg
+                    break
+
+            if last_human is not None:
+                worker_context.append(last_human)
+                seen_ids.add(last_human.id)
+
+            # Include this worker's join/assignment messages and its own prior outputs
+            for msg in recent_messages:
+                if msg.id in seen_ids:
+                    continue
+                # Own messages
+                if msg.sender_name == self.name:
+                    worker_context.append(msg)
+                    seen_ids.add(msg.id)
+                    continue
+                # System notices that mention this worker (joins, task assignments)
+                if msg.role == MessageRole.SYSTEM and self.name in msg.content:
+                    worker_context.append(msg)
+                    seen_ids.add(msg.id)
+
+            # Fallback: if nothing special was found, use the generic recent tail
+            if not worker_context:
+                worker_context = recent_messages
+
+            for msg in worker_context[-10:]:
+                messages.append(msg.to_api_format())
         
         return messages
     

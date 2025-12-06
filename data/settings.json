@@ -15,5 +15,6 @@
   "max_tokens": 100000,
   "temperature": 0.8,
   "thinking_tokens": 50000,
-  "max_tool_depth": 100
+  "max_tool_depth": 100,
+  "load_previous_history": false
 }
