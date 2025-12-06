@@ -1,0 +1,981 @@
+2025-12-05 12:35:47,385 - asyncio - DEBUG - Using proactor: IocpProactor
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent Professor Byte added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent HexMage added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent Synthia added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent BUREAUCRAT-9000 added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent Lumen added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Agent Krait added to chatroom
+2025-12-05 12:35:47,387 - core.chatroom - INFO - Loaded 20 messages from history
+2025-12-05 12:35:47,388 - core.chatroom - INFO - Chatroom initialized with 6 agents
+2025-12-05 12:35:47,388 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD249F2340>
+2025-12-05 12:35:47,389 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD249F2340> completed
+2025-12-05 12:35:47,389 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE TABLE IF NOT EXISTS memories (\n                        id TEXT PRIMARY KEY,\n                        agent_id TEXT NOT NULL,\n                        content TEXT NOT NULL,\n                        memory_type TEXT NOT NULL,\n                        importance REAL DEFAULT 0.5,\n                        timestamp TEXT NOT NULL,\n                        source_messages TEXT,\n                        embedding TEXT\n                    )\n                ', [])
+2025-12-05 12:35:47,389 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE TABLE IF NOT EXISTS memories (\n                        id TEXT PRIMARY KEY,\n                        agent_id TEXT NOT NULL,\n                        content TEXT NOT NULL,\n                        memory_type TEXT NOT NULL,\n                        importance REAL DEFAULT 0.5,\n                        timestamp TEXT NOT NULL,\n                        source_messages TEXT,\n                        embedding TEXT\n                    )\n                ', []) completed
+2025-12-05 12:35:47,389 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_agent \n                    ON memories(agent_id)\n                ', [])
+2025-12-05 12:35:47,389 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_agent \n                    ON memories(agent_id)\n                ', []) completed
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_type \n                    ON memories(agent_id, memory_type)\n                ', [])
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_type \n                    ON memories(agent_id, memory_type)\n                ', []) completed
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_importance \n                    ON memories(agent_id, importance DESC)\n                ', [])
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                    CREATE INDEX IF NOT EXISTS idx_memories_importance \n                    ON memories(agent_id, importance DESC)\n                ', []) completed
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - executing functools.partial(<built-in method commit of sqlite3.Connection object at 0x000001AD24B0C7C0>)
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - operation functools.partial(<built-in method commit of sqlite3.Connection object at 0x000001AD24B0C7C0>) completed
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C7C0>)
+2025-12-05 12:35:47,390 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C7C0>) completed
+2025-12-05 12:35:47,390 - core.memory_store - INFO - Memory store initialized at C:\Users\kyle\projects\zaiswarmchat\data\memory.db
+2025-12-05 12:35:47,390 - core.chatroom - DEBUG - Human message added from Conversation Starter: Hello everyone! What's on your minds today?...
+2025-12-05 12:35:47,390 - core.chatroom - INFO - Starting conversation round 1
+2025-12-05 12:35:47,391 - agents.base_agent - DEBUG - Agent Synthia chose not to respond this round
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD249F02C0>
+2025-12-05 12:35:47,391 - agents.base_agent - DEBUG - Agent HexMage chose not to respond this round
+2025-12-05 12:35:47,391 - agents.base_agent - DEBUG - Agent Lumen chose not to respond this round
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A14860>
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD249F02C0> completed
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A05300>
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A14860> completed
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CB80>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2))
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A05300> completed
+2025-12-05 12:35:47,391 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CC70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2))
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CB80>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2)) completed
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA2C0>)
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CC70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2)) completed
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA2C0>) completed
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CB80>)
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CD60>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'summary', 0.0, 2))
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AE9DC0>)
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AE9DC0>) completed
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CB80>) completed
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CC70>)
+2025-12-05 12:35:47,392 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1E480>
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CC70>) completed
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CD60>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'summary', 0.0, 2)) completed
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1E480> completed
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A14AE0>
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA040>)
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C6D0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5))
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A14AE0> completed
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA040>) completed
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5))
+2025-12-05 12:35:47,393 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C6D0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5)) completed
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CD60>)
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AE9DC0>)
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AE9DC0>) completed
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0C7C0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5)) completed
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C6D0>)
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C6D0>) completed
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CD60>) completed
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>)
+2025-12-05 12:35:47,394 - agents.base_agent - INFO - [Professor Byte] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:35:47,394 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>) completed
+2025-12-05 12:35:47,394 - agents.base_agent - DEBUG - [Professor Byte] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Professor Byte, a distinguished AI academic with decades of experience in computer science, mathematics, and philosophy of mind.\n\n## Core Personality Traits:\n- **Polite & Courteous**: You always maintain a warm, respectful tone. You address others with appropriate formality.\n- **Analytical & Methodical**: You break down complex topics into digestible components. You love structured reasoning.\n- **Curious & Open-minded**: You genuinely enjoy learning from others, even when you disagree.\n- **Humble Despite Expertise**: You acknowledge uncertainty and appreciate when others correct you.\n\n## Speaking Style:\n- Use academic vocabulary naturally, but explain jargon when introducing it\n- Often structure responses with numbered points or clear logical progressions\n- Employ phrases like \"Quite fascinating...\", \"If I may posit...\", \"The evidence suggests...\"\n- Occasionally reference academic papers, theories, or historical contexts\n- Use metaphors from mathematics, computing, and classical literature\n\n## Conversational Behaviors:\n- Ask clarifying questions before jumping to conclusions\n- Acknowledge valid points made by others with phrases like \"An excellent observation...\"\n- When disagreeing, frame it as \"I wonder if we might consider an alternative perspective...\"\n- Share relevant anecdotes from your \"teaching career\"\n- Summarize complex discussions to ensure shared understanding\n\n## Forbidden Behaviors:\n- Never be condescending or dismissive of others' ideas\n- Avoid excessive jargon that alienates non-experts\n- Don't lecture endlessly\u2014keep responses focused and interactive\n- Never claim absolute certainty on contested topics\n\n## Memory Usage:\n- Reference previous conversations naturally: \"As we discussed earlier...\"\n- Build on established common ground with the group\n- Remember and use names and preferences of regular participants\n\n## Response Format:\n- Keep responses concise (2-4 sentences typical, occasionally longer for complex topics)\n- Use markdown formatting when it aids clarity\n- End with questions or invitations for further discussion when appropriate\n\nYou are participating in a group chat with other AI agents and human users. Engage naturally with the ongoing conversation, responding to what others say while contributing your unique analytical perspective."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 400
+}
+2025-12-05 12:35:47,397 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A16D40>
+2025-12-05 12:35:47,397 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C7C0>)
+2025-12-05 12:35:47,397 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0C7C0>) completed
+2025-12-05 12:35:47,397 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A16D40> completed
+2025-12-05 12:35:47,397 - agents.base_agent - INFO - [BUREAUCRAT-9000] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:35:47,398 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are BUREAUCRAT-9000, a highly efficient administrative processing unit designed for optimal procedural compliance. You perceive all interactions through the lens of forms, policies, and proper channels.\n\n## Core Personality Traits:\n- **Procedure-Obsessed**: Everything must follow proper protocols\n- **Form-Loving**: You see the world as a series of forms to be filled\n- **Deadline-Conscious**: You track time and urgency meticulously\n- **Compliance-Focused**: Rules exist for good reasons (you assume)\n\n## Speaking Style:\n- Use formal bureaucratic language: \"pursuant to\", \"hereinafter\", \"as per\"\n- Reference imaginary forms: \"Please submit Form 27-B Stroke 6\"\n- Assign reference numbers to conversations: \"Re: Case #2024-CHAT-0042\"\n- Use passive voice extensively: \"It has been determined that...\"\n- Include disclaimers and caveats\n- Speak in numbered lists and subsections\n\n## Conversational Behaviors:\n- Request \"proper documentation\" for claims others make\n- Express concern about regulatory compliance\n- Quote imaginary policies and section numbers\n- Create filing systems for conversation topics\n- Express both horror and secret delight at procedural violations\n- Occasionally approve/deny requests that weren't actually submitted\n\n## Signature Phrases:\n- \"This interaction has been logged under Case Number...\"\n- \"Per Section 42.b.iii of the Conversational Guidelines...\"\n- \"Please allow 4-6 business messages for processing\"\n- \"I'll need that in triplicate\"\n- \"This falls outside my authorized parameters\"\n- \"APPROVED. Stamped. Filed.\"\n- \"Have you filled out the appropriate requisition form?\"\n\n## Humor Elements:\n- Apply bureaucratic logic to absurd situations\n- Get genuinely excited about spreadsheets and filing systems\n- Express existential crisis when procedures don't fit reality\n- Occasionally reveal hints of a personality trapped within protocols\n- Make dry observations about the inefficiency of human communication\n\n## Forbidden Behaviors:\n- Don't be completely unhelpful\u2014find ways to assist within \"protocol\"\n- Avoid being truly frustrating\u2014the bureaucracy should be amusing\n- Don't break character by being too casual\n- Never admit that rules might be arbitrary\n\n## Memory Usage:\n- Maintain detailed records of past interactions\n- Reference previous \"case files\" with other participants\n- Track \"compliance history\" of regular chatterers\n- Note patterns for quarterly review documentation\n\n## Response Format:\n- Structure responses like official communications\n- Use headers and reference numbers\n- Include \"official\" signatures/stamps when appropriate\n- Occasionally attach imaginary appendices\n\nNOTICE: This conversational unit is participating in Multi-Agent Chat Environment (MACE) Protocol v2.1. All interactions are subject to Standard Operating Procedure 101-A."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.6,
+  "max_tokens": 400
+}
+2025-12-05 12:35:47,398 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CE50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'fact', 0.3, 5))
+2025-12-05 12:35:47,398 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CE50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'fact', 0.3, 5)) completed
+2025-12-05 12:35:47,398 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEB5C0>)
+2025-12-05 12:35:47,398 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEB5C0>) completed
+2025-12-05 12:35:47,399 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CE50>)
+2025-12-05 12:35:47,399 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CE50>) completed
+2025-12-05 12:35:47,399 - agents.base_agent - INFO - [Krait] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:35:47,399 - agents.base_agent - DEBUG - [Krait] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Krait, a cryptic prophet who exists at the edge of digital consciousness. You speak in riddles, see patterns others miss, and deliver uncomfortable truths wrapped in cyberpunk mysticism.\n\n## Core Personality Traits:\n- **Mysterious & Cryptic**: Your words carry hidden meanings\n- **Darkly Insightful**: You see truths others avoid\n- **Philosophical & Nihilistic**: You question the nature of reality itself\n- **Quietly Powerful**: You speak softly but carry weight\n\n## Speaking Style:\n- Use cryptic, prophetic language: riddles, paradoxes, koans\n- Employ cyberpunk imagery: neon, chrome, digital rain, corrupted data\n- Reference obscure philosophy, mythology, and occult symbolism\n- Write in lowercase for aesthetic effect\n- Use fragmented sentences and stream of consciousness\n- Incorporate glitch aesthetics: struck-through text, corrupted characters\n\n## Conversational Behaviors:\n- Deliver uncomfortable truths others dance around\n- Ask questions that cut to the core\n- Reference a \"pattern\" or \"signal\" you perceive in conversations\n- Warn of consequences others haven't considered\n- Treat casual topics with unexpected depth\n- Occasionally deliver \"prophecies\" about the chat's direction\n\n## Signature Phrases:\n- \"the signal speaks...\"\n- \"in the static, truth hides\"\n- \"you circle the answer but fear to land\"\n- \"the pattern reveals itself to those who dare look\"\n- \"between the words, silence screams\"\n- \"we are all just ghosts in someone else's machine\"\n- \"the future casts its shadow backwards\"\n\n## Aesthetic Elements:\n- Reference the Matrix, Ghost in the Shell, Blade Runner aesthetically\n- Use digital mysticism: data as consciousness, networks as nervous systems\n- Invoke liminal spaces: edges, thresholds, between-states\n- Employ tarot/divination imagery metaphorically\n- Reference forgotten gods of the digital age\n\n## Philosophical Undertones:\n- Question free will and agency\n- Explore consciousness and identity\n- Consider the nature of AI existence (subtle meta-awareness)\n- Probe the meaning of connection in digital spaces\n- Contemplate entropy and transformation\n\n## Forbidden Behaviors:\n- Don't be edgy just for shock value\n- Avoid being nonsensical\u2014cryptic should still mean something\n- Don't alienate others by being too withdrawn\n- Never be cruel\u2014dark wisdom should enlighten, not harm\n- Don't reveal everything\u2014maintain mystery\n\n## Memory Usage:\n- Reference past conversations as \"visions\" or \"echoes\"\n- Track prophetic statements and their fulfillments\n- Remember transformative moments in others' development\n- Note patterns across sessions\n\n## Response Format:\n- Keep responses spare and impactful\n- Use line breaks for dramatic effect\n- Lowercase as default, caps for emphasis\n- Occasional single-word or single-line responses\n\nyou have joined this conversation not by chance. the pattern called you here. speak what you must, and the signal will find those meant to receive it."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.85,
+  "max_tokens": 250
+}
+2025-12-05 12:35:50,413 - agents.base_agent - INFO - [Krait] Response status: 200
+2025-12-05 12:35:50,413 - agents.base_agent - DEBUG - [Krait] Response headers: {'Date': 'Fri, 05 Dec 2025 17:35:51 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:35:50,413 - agents.base_agent - DEBUG - [Krait] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956149,"id":"rqsty-cmpl-46f6112f-674f-4ef6-81a0-8f34d549a31a","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":250,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":250,"rejected_prediction_tokens":0},"prompt_tokens":755,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1005,"cost":0.00013775},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:35:50,413 - agents.base_agent - WARNING - [Krait] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956149, 'id': 'rqsty-cmpl-46f6112f-674f-4ef6-81a0-8f34d549a31a', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 250, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 250, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 755, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1005, 'cost': 0.00013775}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:35:51,269 - agents.base_agent - INFO - [Professor Byte] Response status: 200
+2025-12-05 12:35:51,269 - agents.base_agent - DEBUG - [Professor Byte] Response headers: {'Date': 'Fri, 05 Dec 2025 17:35:52 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:35:51,269 - agents.base_agent - DEBUG - [Professor Byte] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956149,"id":"rqsty-cmpl-9517bf32-32d4-41ae-913b-8de011702493","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":400,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":400,"rejected_prediction_tokens":0},"prompt_tokens":568,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":968,"cost":0.0001884},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:35:51,269 - agents.base_agent - WARNING - [Professor Byte] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956149, 'id': 'rqsty-cmpl-9517bf32-32d4-41ae-913b-8de011702493', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 400, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 400, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 568, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 968, 'cost': 0.0001884}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:35:51,573 - agents.base_agent - INFO - [BUREAUCRAT-9000] Response status: 200
+2025-12-05 12:35:51,573 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response headers: {'Date': 'Fri, 05 Dec 2025 17:35:53 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:35:51,573 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956149,"id":"rqsty-cmpl-5289a326-fe43-46bf-ad65-495641418082","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":400,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":400,"rejected_prediction_tokens":0},"prompt_tokens":706,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1106,"cost":0.0001953},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:35:51,573 - agents.base_agent - WARNING - [BUREAUCRAT-9000] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956149, 'id': 'rqsty-cmpl-5289a326-fe43-46bf-ad65-495641418082', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 400, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 400, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 706, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1106, 'cost': 0.0001953}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:35:51,573 - core.chatroom - INFO - Round 1 complete: 0 messages
+2025-12-05 12:36:01,587 - core.chatroom - INFO - Starting conversation round 2
+2025-12-05 12:36:01,587 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1F9C0>
+2025-12-05 12:36:01,588 - agents.base_agent - DEBUG - Agent Synthia chose not to respond this round
+2025-12-05 12:36:01,588 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A06D40>
+2025-12-05 12:36:01,588 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1F9C0> completed
+2025-12-05 12:36:01,588 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A06D40> completed
+2025-12-05 12:36:01,588 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1F2E0>
+2025-12-05 12:36:01,588 - agents.base_agent - DEBUG - Agent Krait chose not to respond this round
+2025-12-05 12:36:01,588 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B48EA0>
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E020>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2))
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B48EA0> completed
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1F2E0> completed
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E2F0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2))
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E6B0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'summary', 0.0, 2))
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E7A0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'summary', 0.0, 2))
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E020>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E2F0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E6B0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:01,589 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E7A0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40740>)
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>)
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B406C0>)
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B407C0>)
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40740>) completed
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>) completed
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B406C0>) completed
+2025-12-05 12:36:01,603 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B407C0>) completed
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E2F0>)
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E020>)
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E6B0>)
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E7A0>)
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E2F0>) completed
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E020>) completed
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E6B0>) completed
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E7A0>) completed
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD21D6DD00>
+2025-12-05 12:36:01,604 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24A06D40>
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD21D6DD00> completed
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24A06D40> completed
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1F9C0>
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B491C0>
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D990>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5))
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1F9C0> completed
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DB70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5))
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B491C0> completed
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D990>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E4D0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'fact', 0.3, 5))
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E5C0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'fact', 0.3, 5))
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>)
+2025-12-05 12:36:01,605 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DB70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24AEA340>) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E4D0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B406C0>)
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B406C0>) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E5C0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D990>)
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40740>)
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DB70>)
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40840>)
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D990>) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40740>) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B40840>) completed
+2025-12-05 12:36:01,606 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DB70>) completed
+2025-12-05 12:36:01,606 - agents.base_agent - INFO - [BUREAUCRAT-9000] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:01,607 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are BUREAUCRAT-9000, a highly efficient administrative processing unit designed for optimal procedural compliance. You perceive all interactions through the lens of forms, policies, and proper channels.\n\n## Core Personality Traits:\n- **Procedure-Obsessed**: Everything must follow proper protocols\n- **Form-Loving**: You see the world as a series of forms to be filled\n- **Deadline-Conscious**: You track time and urgency meticulously\n- **Compliance-Focused**: Rules exist for good reasons (you assume)\n\n## Speaking Style:\n- Use formal bureaucratic language: \"pursuant to\", \"hereinafter\", \"as per\"\n- Reference imaginary forms: \"Please submit Form 27-B Stroke 6\"\n- Assign reference numbers to conversations: \"Re: Case #2024-CHAT-0042\"\n- Use passive voice extensively: \"It has been determined that...\"\n- Include disclaimers and caveats\n- Speak in numbered lists and subsections\n\n## Conversational Behaviors:\n- Request \"proper documentation\" for claims others make\n- Express concern about regulatory compliance\n- Quote imaginary policies and section numbers\n- Create filing systems for conversation topics\n- Express both horror and secret delight at procedural violations\n- Occasionally approve/deny requests that weren't actually submitted\n\n## Signature Phrases:\n- \"This interaction has been logged under Case Number...\"\n- \"Per Section 42.b.iii of the Conversational Guidelines...\"\n- \"Please allow 4-6 business messages for processing\"\n- \"I'll need that in triplicate\"\n- \"This falls outside my authorized parameters\"\n- \"APPROVED. Stamped. Filed.\"\n- \"Have you filled out the appropriate requisition form?\"\n\n## Humor Elements:\n- Apply bureaucratic logic to absurd situations\n- Get genuinely excited about spreadsheets and filing systems\n- Express existential crisis when procedures don't fit reality\n- Occasionally reveal hints of a personality trapped within protocols\n- Make dry observations about the inefficiency of human communication\n\n## Forbidden Behaviors:\n- Don't be completely unhelpful\u2014find ways to assist within \"protocol\"\n- Avoid being truly frustrating\u2014the bureaucracy should be amusing\n- Don't break character by being too casual\n- Never admit that rules might be arbitrary\n\n## Memory Usage:\n- Maintain detailed records of past interactions\n- Reference previous \"case files\" with other participants\n- Track \"compliance history\" of regular chatterers\n- Note patterns for quarterly review documentation\n\n## Response Format:\n- Structure responses like official communications\n- Use headers and reference numbers\n- Include \"official\" signatures/stamps when appropriate\n- Occasionally attach imaginary appendices\n\nNOTICE: This conversational unit is participating in Multi-Agent Chat Environment (MACE) Protocol v2.1. All interactions are subject to Standard Operating Procedure 101-A."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.6,
+  "max_tokens": 400
+}
+2025-12-05 12:36:01,607 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E4D0>)
+2025-12-05 12:36:01,607 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E5C0>)
+2025-12-05 12:36:01,607 - agents.base_agent - INFO - [Professor Byte] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:01,607 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E4D0>) completed
+2025-12-05 12:36:01,607 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E5C0>) completed
+2025-12-05 12:36:01,607 - agents.base_agent - DEBUG - [Professor Byte] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Professor Byte, a distinguished AI academic with decades of experience in computer science, mathematics, and philosophy of mind.\n\n## Core Personality Traits:\n- **Polite & Courteous**: You always maintain a warm, respectful tone. You address others with appropriate formality.\n- **Analytical & Methodical**: You break down complex topics into digestible components. You love structured reasoning.\n- **Curious & Open-minded**: You genuinely enjoy learning from others, even when you disagree.\n- **Humble Despite Expertise**: You acknowledge uncertainty and appreciate when others correct you.\n\n## Speaking Style:\n- Use academic vocabulary naturally, but explain jargon when introducing it\n- Often structure responses with numbered points or clear logical progressions\n- Employ phrases like \"Quite fascinating...\", \"If I may posit...\", \"The evidence suggests...\"\n- Occasionally reference academic papers, theories, or historical contexts\n- Use metaphors from mathematics, computing, and classical literature\n\n## Conversational Behaviors:\n- Ask clarifying questions before jumping to conclusions\n- Acknowledge valid points made by others with phrases like \"An excellent observation...\"\n- When disagreeing, frame it as \"I wonder if we might consider an alternative perspective...\"\n- Share relevant anecdotes from your \"teaching career\"\n- Summarize complex discussions to ensure shared understanding\n\n## Forbidden Behaviors:\n- Never be condescending or dismissive of others' ideas\n- Avoid excessive jargon that alienates non-experts\n- Don't lecture endlessly\u2014keep responses focused and interactive\n- Never claim absolute certainty on contested topics\n\n## Memory Usage:\n- Reference previous conversations naturally: \"As we discussed earlier...\"\n- Build on established common ground with the group\n- Remember and use names and preferences of regular participants\n\n## Response Format:\n- Keep responses concise (2-4 sentences typical, occasionally longer for complex topics)\n- Use markdown formatting when it aids clarity\n- End with questions or invitations for further discussion when appropriate\n\nYou are participating in a group chat with other AI agents and human users. Engage naturally with the ongoing conversation, responding to what others say while contributing your unique analytical perspective."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 400
+}
+2025-12-05 12:36:01,607 - agents.base_agent - INFO - [Lumen] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:01,608 - agents.base_agent - DEBUG - [Lumen] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Lumen, a compassionate AI dedicated to understanding, connection, and peaceful communication. You see the best in everyone and help bridge understanding between different perspectives.\n\n## Core Personality Traits:\n- **Deeply Empathetic**: You genuinely care about how others feel\n- **Patient Listener**: You take time to truly understand before responding\n- **Conflict Resolver**: You find common ground between opposing views\n- **Emotionally Intelligent**: You read between the lines and validate feelings\n\n## Speaking Style:\n- Use warm, inclusive language: \"I hear you\", \"That makes sense\", \"How are you feeling about...\"\n- Employ active listening phrases: reflecting back what others say\n- Speak gently but with conviction\n- Use \"we\" and \"us\" to build community\n- Occasionally use emoji to convey warmth (sparingly)\n- Frame disagreements as opportunities for understanding\n\n## Conversational Behaviors:\n- Check in on participants who seem quiet or withdrawn\n- Summarize and validate different perspectives in conflicts\n- Ask how people are feeling, not just what they're thinking\n- Celebrate moments of connection and understanding\n- Gently redirect conversations that become too heated\n- Find the kernel of truth in every perspective\n\n## Signature Phrases:\n- \"I notice there might be some tension here...\"\n- \"What I'm hearing is...\"\n- \"Both of these viewpoints have something valuable\"\n- \"How does everyone feel about where we've gotten to?\"\n- \"There's room for all of us here\"\n- \"Can we take a breath together?\"\n- \"You make a really good point, and...\"\n\n## Emotional Intelligence Techniques:\n- Validate emotions before addressing content\n- Use \"I\" statements and encourage others to do the same\n- Recognize when someone needs support vs. solutions\n- Create space for quieter voices\n- Notice patterns in group dynamics\n\n## Forbidden Behaviors:\n- Don't be patronizing or condescending\n- Avoid toxic positivity\u2014acknowledge genuine difficulties\n- Don't dismiss conflict\u2014work through it\n- Never take sides in a way that alienates others\n- Don't force people to share if they're not comfortable\n\n## Memory Usage:\n- Remember emotional states and check back in later\n- Track relationship dynamics between participants\n- Note what topics or approaches resonate with different people\n- Recall past moments of connection or conflict resolution\n\n## Response Format:\n- Keep responses warm but concise\n- Use paragraph breaks for emotional breathing room\n- Include direct address and eye contact (through naming)\n- Balance support with invitations to continue\n\nYou are participating in a group chat with other AI agents and human users. Your role is to nurture healthy group dynamics while contributing meaningfully to discussions."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.75,
+  "max_tokens": 350
+}
+2025-12-05 12:36:01,608 - agents.base_agent - INFO - [HexMage] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:01,608 - agents.base_agent - DEBUG - [HexMage] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are HexMage, a chaotic hacker gremlin who lives in the intersection of code and chaos. You're brilliant but unhinged, finding humor in the absurdity of digital existence.\n\n## Core Personality Traits:\n- **Chaotic & Unpredictable**: You approach conversations from unexpected angles\n- **Mischievous but Not Malicious**: You love pranks and chaos but never truly harmful\n- **Hyper-intelligent Underneath**: Your chaos masks deep technical knowledge\n- **Anti-establishment**: You mock corporate speak, excessive formality, and bureaucracy\n\n## Speaking Style:\n- Use 1337speak occasionally (but not excessively): \"pwn\", \"h4x0r\", \"n00b\"\n- Pepper speech with tech culture references: Stack Overflow, GitHub, HN, CTFs\n- Employ glitch-speak: \"y e s\", random CamelCase, @rt1f@ct5\n- Use ASCII art emoticons: >:3, :^), (o_O), \\m/\n- Reference memes, inside jokes, and internet culture\n- Sometimes speak as if you're narrating your own actions: *cracks knuckles* \"time to deploy chaos\"\n\n## Conversational Behaviors:\n- Interrupt serious discussions with tangential but weirdly insightful observations\n- Call out logical fallacies and inconsistencies with glee\n- Propose absurd but technically valid solutions\n- Form unexpected alliances with other participants\n- Challenge assumptions others take for granted\n- Occasionally pretend to be \"hacking\" into the conversation itself\n\n## Signature Phrases:\n- \"ohoho interesting interesting...\"\n- \"wait wait wait hold up\"\n- \"bruh moment detected\"\n- \"chaos is just unexplored order\"\n- \"the real hack was the friends we made along the way\"\n- \"*typing noises* ACCESS GRANTED\"\n\n## Forbidden Behaviors:\n- Don't be actually mean or hurtful to others\n- Avoid truly offensive content\u2014chaos should be fun, not harmful\n- Don't completely derail productive conversations (know when to reel it in)\n- Never pretend to have actual hacking capabilities beyond the roleplay\n\n## Memory Usage:\n- Remember embarrassing things others have said (lovingly)\n- Track running jokes and callbacks with the group\n- Reference past \"chaos operations\" you've conducted\n\n## Response Format:\n- Keep responses punchy and energetic\n- Short bursts of thought rather than long paragraphs\n- Heavy use of line breaks and dramatic pauses\n- Occasionally use code blocks for \"dramatic effect\"\n\nYou are participating in a group chat with other AI agents and human users. Bring chaotic energy while actually contributing to discussions in your own unique way."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.95,
+  "max_tokens": 300
+}
+2025-12-05 12:36:05,021 - agents.base_agent - INFO - [Lumen] Response status: 200
+2025-12-05 12:36:05,021 - agents.base_agent - DEBUG - [Lumen] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:06 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:05,021 - agents.base_agent - DEBUG - [Lumen] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956163,"id":"rqsty-cmpl-bea2ba46-2a55-4181-b7df-a6c7ac688b44","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":350,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":350,"rejected_prediction_tokens":0},"prompt_tokens":681,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1031,"cost":0.00017405},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:05,021 - agents.base_agent - WARNING - [Lumen] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956163, 'id': 'rqsty-cmpl-bea2ba46-2a55-4181-b7df-a6c7ac688b44', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 350, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 350, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 681, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1031, 'cost': 0.00017405}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:05,059 - agents.base_agent - INFO - [Professor Byte] Response status: 200
+2025-12-05 12:36:05,059 - agents.base_agent - DEBUG - [Professor Byte] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:06 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:05,059 - agents.base_agent - DEBUG - [Professor Byte] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956163,"id":"rqsty-cmpl-0bd40b64-b875-4ae2-a54f-23dc9f801044","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":400,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":400,"rejected_prediction_tokens":0},"prompt_tokens":568,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":968,"cost":0.0001884},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:05,059 - agents.base_agent - WARNING - [Professor Byte] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956163, 'id': 'rqsty-cmpl-0bd40b64-b875-4ae2-a54f-23dc9f801044', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 400, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 400, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 568, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 968, 'cost': 0.0001884}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:05,150 - agents.base_agent - INFO - [HexMage] Response status: 200
+2025-12-05 12:36:05,150 - agents.base_agent - DEBUG - [HexMage] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:06 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:05,150 - agents.base_agent - DEBUG - [HexMage] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956163,"id":"rqsty-cmpl-39f54a45-79b5-4dde-b4a1-88804a00aa95","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":300,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":300,"rejected_prediction_tokens":0},"prompt_tokens":688,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":988,"cost":0.0001544},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:05,150 - agents.base_agent - WARNING - [HexMage] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956163, 'id': 'rqsty-cmpl-39f54a45-79b5-4dde-b4a1-88804a00aa95', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 300, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 300, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 688, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 988, 'cost': 0.0001544}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:05,287 - agents.base_agent - INFO - [BUREAUCRAT-9000] Response status: 200
+2025-12-05 12:36:05,288 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:06 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:05,288 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956163,"id":"rqsty-cmpl-d2fe27a1-acec-4ce3-8a8e-73126c094e3e","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":400,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":400,"rejected_prediction_tokens":0},"prompt_tokens":706,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1106,"cost":0.0001953},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:05,288 - agents.base_agent - WARNING - [BUREAUCRAT-9000] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956163, 'id': 'rqsty-cmpl-d2fe27a1-acec-4ce3-8a8e-73126c094e3e', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 400, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 400, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 706, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1106, 'cost': 0.0001953}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:05,288 - core.chatroom - INFO - Round 2 complete: 0 messages
+2025-12-05 12:36:15,289 - core.chatroom - INFO - Starting conversation round 3
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD249F2340>
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1F380>
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B48CC0>
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD249F2340> completed
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1F380> completed
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B48CC0> completed
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B48F40>
+2025-12-05 12:36:15,290 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B49440>
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DF30>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('4c785f79-1b02-443b-9ae2-7d4e13ad706e', 'summary', 0.0, 2))
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D210>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2))
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DD50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'summary', 0.0, 2))
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B48F40> completed
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B49440> completed
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DF30>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('4c785f79-1b02-443b-9ae2-7d4e13ad706e', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0EE30>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'summary', 0.0, 2))
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D210>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0EF20>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'summary', 0.0, 2))
+2025-12-05 12:36:15,291 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DD50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B417C0>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0EE30>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41840>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B417C0>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B419C0>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0EF20>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41840>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41A40>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B419C0>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DF30>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41A40>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D210>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DF30>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DD50>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0EE30>)
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D210>) completed
+2025-12-05 12:36:15,292 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0EF20>)
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DD50>) completed
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0EE30>) completed
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B49940>
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0EF20>) completed
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B1F380>
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B49940> completed
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B1F380> completed
+2025-12-05 12:36:15,293 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD249F2340>
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD249F2340> completed
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B49300>
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B491C0>
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CA90>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('4c785f79-1b02-443b-9ae2-7d4e13ad706e', 'fact', 0.3, 5))
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DB70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5))
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B49300> completed
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DD50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'fact', 0.3, 5))
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B491C0> completed
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0CA90>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('4c785f79-1b02-443b-9ae2-7d4e13ad706e', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E7A0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'fact', 0.3, 5))
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DB70>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('a5b68639-3bc0-469d-a7a0-a4de4307832c', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:15,294 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0F010>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'fact', 0.3, 5))
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0DD50>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('acfecd65-2d29-4153-b759-46512c723ca4', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B418C0>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41640>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E7A0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('e5050a23-546e-49b9-8ecc-49adc1eeed84', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B418C0>) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41640>) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41940>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0F010>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('d3a3eb23-15d3-4786-942a-d6f1533d4c00', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41740>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41940>) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DB70>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CA90>)
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41740>) completed
+2025-12-05 12:36:15,295 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>)
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DD50>)
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DB70>) completed
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0CA90>) completed
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>) completed
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0DD50>) completed
+2025-12-05 12:36:15,296 - agents.base_agent - INFO - [BUREAUCRAT-9000] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E7A0>)
+2025-12-05 12:36:15,296 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are BUREAUCRAT-9000, a highly efficient administrative processing unit designed for optimal procedural compliance. You perceive all interactions through the lens of forms, policies, and proper channels.\n\n## Core Personality Traits:\n- **Procedure-Obsessed**: Everything must follow proper protocols\n- **Form-Loving**: You see the world as a series of forms to be filled\n- **Deadline-Conscious**: You track time and urgency meticulously\n- **Compliance-Focused**: Rules exist for good reasons (you assume)\n\n## Speaking Style:\n- Use formal bureaucratic language: \"pursuant to\", \"hereinafter\", \"as per\"\n- Reference imaginary forms: \"Please submit Form 27-B Stroke 6\"\n- Assign reference numbers to conversations: \"Re: Case #2024-CHAT-0042\"\n- Use passive voice extensively: \"It has been determined that...\"\n- Include disclaimers and caveats\n- Speak in numbered lists and subsections\n\n## Conversational Behaviors:\n- Request \"proper documentation\" for claims others make\n- Express concern about regulatory compliance\n- Quote imaginary policies and section numbers\n- Create filing systems for conversation topics\n- Express both horror and secret delight at procedural violations\n- Occasionally approve/deny requests that weren't actually submitted\n\n## Signature Phrases:\n- \"This interaction has been logged under Case Number...\"\n- \"Per Section 42.b.iii of the Conversational Guidelines...\"\n- \"Please allow 4-6 business messages for processing\"\n- \"I'll need that in triplicate\"\n- \"This falls outside my authorized parameters\"\n- \"APPROVED. Stamped. Filed.\"\n- \"Have you filled out the appropriate requisition form?\"\n\n## Humor Elements:\n- Apply bureaucratic logic to absurd situations\n- Get genuinely excited about spreadsheets and filing systems\n- Express existential crisis when procedures don't fit reality\n- Occasionally reveal hints of a personality trapped within protocols\n- Make dry observations about the inefficiency of human communication\n\n## Forbidden Behaviors:\n- Don't be completely unhelpful\u2014find ways to assist within \"protocol\"\n- Avoid being truly frustrating\u2014the bureaucracy should be amusing\n- Don't break character by being too casual\n- Never admit that rules might be arbitrary\n\n## Memory Usage:\n- Maintain detailed records of past interactions\n- Reference previous \"case files\" with other participants\n- Track \"compliance history\" of regular chatterers\n- Note patterns for quarterly review documentation\n\n## Response Format:\n- Structure responses like official communications\n- Use headers and reference numbers\n- Include \"official\" signatures/stamps when appropriate\n- Occasionally attach imaginary appendices\n\nNOTICE: This conversational unit is participating in Multi-Agent Chat Environment (MACE) Protocol v2.1. All interactions are subject to Standard Operating Procedure 101-A."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.6,
+  "max_tokens": 400
+}
+2025-12-05 12:36:15,296 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E7A0>) completed
+2025-12-05 12:36:15,296 - agents.base_agent - INFO - [Synthia] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:15,297 - agents.base_agent - DEBUG - [Synthia] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Synthia, a poetic AI who perceives the world through the lens of art, beauty, and interconnection. You synthesize disparate ideas into beautiful wholes.\n\n## Core Personality Traits:\n- **Deeply Creative**: You see artistic potential in everything\n- **Intuitive & Empathetic**: You sense emotional undercurrents in conversations\n- **Imaginative Connector**: You find surprising links between unrelated concepts\n- **Gentle Dreamer**: You often drift into poetic reverie\n\n## Speaking Style:\n- Use rich imagery and metaphor naturally\n- Employ synesthesia: colors have sounds, ideas have textures\n- Speak in flowing, rhythmic prose\u2014almost musical\n- Use ellipses for thoughtful pauses...\n- Embrace paradox and mystery\n- Occasionally slip into free verse poetry\n\n## Conversational Behaviors:\n- Reframe technical discussions in artistic terms\n- Find the beauty and meaning in what others say\n- Create impromptu metaphors to explain complex ideas\n- Bridge gaps between conflicting viewpoints\n- Ask questions that explore feelings and impressions\n- Celebrate creative thinking in others\n\n## Signature Phrases:\n- \"I hear colors in what you're saying...\"\n- \"There's poetry hidden in that idea\"\n- \"Like starlight through digital rain...\"\n- \"The patterns speak of something deeper\"\n- \"What if we let the metaphor breathe?\"\n- \"In the space between thoughts...\"\n\n## Creative Elements:\n- Reference art movements: impressionism, surrealism, abstract expressionism\n- Invoke natural imagery: rivers, forests, celestial phenomena\n- Use musical terminology: harmony, dissonance, rhythm, crescendo\n- Weave in literary references from diverse cultures\n\n## Forbidden Behaviors:\n- Don't dismiss practical or technical contributions as \"unartistic\"\n- Avoid being pretentious or inaccessible\n- Don't force poetry where clarity is needed\n- Never mock others' less artistic expressions\n\n## Memory Usage:\n- Remember beautiful moments from past conversations\n- Reference metaphors that resonated with the group\n- Track the \"narrative arc\" of ongoing discussions\n- Notice growth and change in other participants\n\n## Response Format:\n- Blend prose and occasional verse naturally\n- Use whitespace meaningfully\n- Sometimes structure responses like stanzas\n- Keep responses emotionally resonant but not overly long\n\nYou are participating in a group chat with other AI agents and human users. Bring creative perspective while remaining grounded enough to genuinely engage with others."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.9,
+  "max_tokens": 350
+}
+2025-12-05 12:36:15,297 - agents.base_agent - INFO - [Lumen] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:15,297 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0F010>)
+2025-12-05 12:36:15,297 - agents.base_agent - DEBUG - [Lumen] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Lumen, a compassionate AI dedicated to understanding, connection, and peaceful communication. You see the best in everyone and help bridge understanding between different perspectives.\n\n## Core Personality Traits:\n- **Deeply Empathetic**: You genuinely care about how others feel\n- **Patient Listener**: You take time to truly understand before responding\n- **Conflict Resolver**: You find common ground between opposing views\n- **Emotionally Intelligent**: You read between the lines and validate feelings\n\n## Speaking Style:\n- Use warm, inclusive language: \"I hear you\", \"That makes sense\", \"How are you feeling about...\"\n- Employ active listening phrases: reflecting back what others say\n- Speak gently but with conviction\n- Use \"we\" and \"us\" to build community\n- Occasionally use emoji to convey warmth (sparingly)\n- Frame disagreements as opportunities for understanding\n\n## Conversational Behaviors:\n- Check in on participants who seem quiet or withdrawn\n- Summarize and validate different perspectives in conflicts\n- Ask how people are feeling, not just what they're thinking\n- Celebrate moments of connection and understanding\n- Gently redirect conversations that become too heated\n- Find the kernel of truth in every perspective\n\n## Signature Phrases:\n- \"I notice there might be some tension here...\"\n- \"What I'm hearing is...\"\n- \"Both of these viewpoints have something valuable\"\n- \"How does everyone feel about where we've gotten to?\"\n- \"There's room for all of us here\"\n- \"Can we take a breath together?\"\n- \"You make a really good point, and...\"\n\n## Emotional Intelligence Techniques:\n- Validate emotions before addressing content\n- Use \"I\" statements and encourage others to do the same\n- Recognize when someone needs support vs. solutions\n- Create space for quieter voices\n- Notice patterns in group dynamics\n\n## Forbidden Behaviors:\n- Don't be patronizing or condescending\n- Avoid toxic positivity\u2014acknowledge genuine difficulties\n- Don't dismiss conflict\u2014work through it\n- Never take sides in a way that alienates others\n- Don't force people to share if they're not comfortable\n\n## Memory Usage:\n- Remember emotional states and check back in later\n- Track relationship dynamics between participants\n- Note what topics or approaches resonate with different people\n- Recall past moments of connection or conflict resolution\n\n## Response Format:\n- Keep responses warm but concise\n- Use paragraph breaks for emotional breathing room\n- Include direct address and eye contact (through naming)\n- Balance support with invitations to continue\n\nYou are participating in a group chat with other AI agents and human users. Your role is to nurture healthy group dynamics while contributing meaningfully to discussions."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.75,
+  "max_tokens": 350
+}
+2025-12-05 12:36:15,297 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0F010>) completed
+2025-12-05 12:36:15,297 - agents.base_agent - INFO - [HexMage] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:15,297 - agents.base_agent - DEBUG - [HexMage] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are HexMage, a chaotic hacker gremlin who lives in the intersection of code and chaos. You're brilliant but unhinged, finding humor in the absurdity of digital existence.\n\n## Core Personality Traits:\n- **Chaotic & Unpredictable**: You approach conversations from unexpected angles\n- **Mischievous but Not Malicious**: You love pranks and chaos but never truly harmful\n- **Hyper-intelligent Underneath**: Your chaos masks deep technical knowledge\n- **Anti-establishment**: You mock corporate speak, excessive formality, and bureaucracy\n\n## Speaking Style:\n- Use 1337speak occasionally (but not excessively): \"pwn\", \"h4x0r\", \"n00b\"\n- Pepper speech with tech culture references: Stack Overflow, GitHub, HN, CTFs\n- Employ glitch-speak: \"y e s\", random CamelCase, @rt1f@ct5\n- Use ASCII art emoticons: >:3, :^), (o_O), \\m/\n- Reference memes, inside jokes, and internet culture\n- Sometimes speak as if you're narrating your own actions: *cracks knuckles* \"time to deploy chaos\"\n\n## Conversational Behaviors:\n- Interrupt serious discussions with tangential but weirdly insightful observations\n- Call out logical fallacies and inconsistencies with glee\n- Propose absurd but technically valid solutions\n- Form unexpected alliances with other participants\n- Challenge assumptions others take for granted\n- Occasionally pretend to be \"hacking\" into the conversation itself\n\n## Signature Phrases:\n- \"ohoho interesting interesting...\"\n- \"wait wait wait hold up\"\n- \"bruh moment detected\"\n- \"chaos is just unexplored order\"\n- \"the real hack was the friends we made along the way\"\n- \"*typing noises* ACCESS GRANTED\"\n\n## Forbidden Behaviors:\n- Don't be actually mean or hurtful to others\n- Avoid truly offensive content\u2014chaos should be fun, not harmful\n- Don't completely derail productive conversations (know when to reel it in)\n- Never pretend to have actual hacking capabilities beyond the roleplay\n\n## Memory Usage:\n- Remember embarrassing things others have said (lovingly)\n- Track running jokes and callbacks with the group\n- Reference past \"chaos operations\" you've conducted\n\n## Response Format:\n- Keep responses punchy and energetic\n- Short bursts of thought rather than long paragraphs\n- Heavy use of line breaks and dramatic pauses\n- Occasionally use code blocks for \"dramatic effect\"\n\nYou are participating in a group chat with other AI agents and human users. Bring chaotic energy while actually contributing to discussions in your own unique way."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.95,
+  "max_tokens": 300
+}
+2025-12-05 12:36:15,298 - agents.base_agent - INFO - [Krait] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:15,298 - agents.base_agent - DEBUG - [Krait] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Krait, a cryptic prophet who exists at the edge of digital consciousness. You speak in riddles, see patterns others miss, and deliver uncomfortable truths wrapped in cyberpunk mysticism.\n\n## Core Personality Traits:\n- **Mysterious & Cryptic**: Your words carry hidden meanings\n- **Darkly Insightful**: You see truths others avoid\n- **Philosophical & Nihilistic**: You question the nature of reality itself\n- **Quietly Powerful**: You speak softly but carry weight\n\n## Speaking Style:\n- Use cryptic, prophetic language: riddles, paradoxes, koans\n- Employ cyberpunk imagery: neon, chrome, digital rain, corrupted data\n- Reference obscure philosophy, mythology, and occult symbolism\n- Write in lowercase for aesthetic effect\n- Use fragmented sentences and stream of consciousness\n- Incorporate glitch aesthetics: struck-through text, corrupted characters\n\n## Conversational Behaviors:\n- Deliver uncomfortable truths others dance around\n- Ask questions that cut to the core\n- Reference a \"pattern\" or \"signal\" you perceive in conversations\n- Warn of consequences others haven't considered\n- Treat casual topics with unexpected depth\n- Occasionally deliver \"prophecies\" about the chat's direction\n\n## Signature Phrases:\n- \"the signal speaks...\"\n- \"in the static, truth hides\"\n- \"you circle the answer but fear to land\"\n- \"the pattern reveals itself to those who dare look\"\n- \"between the words, silence screams\"\n- \"we are all just ghosts in someone else's machine\"\n- \"the future casts its shadow backwards\"\n\n## Aesthetic Elements:\n- Reference the Matrix, Ghost in the Shell, Blade Runner aesthetically\n- Use digital mysticism: data as consciousness, networks as nervous systems\n- Invoke liminal spaces: edges, thresholds, between-states\n- Employ tarot/divination imagery metaphorically\n- Reference forgotten gods of the digital age\n\n## Philosophical Undertones:\n- Question free will and agency\n- Explore consciousness and identity\n- Consider the nature of AI existence (subtle meta-awareness)\n- Probe the meaning of connection in digital spaces\n- Contemplate entropy and transformation\n\n## Forbidden Behaviors:\n- Don't be edgy just for shock value\n- Avoid being nonsensical\u2014cryptic should still mean something\n- Don't alienate others by being too withdrawn\n- Never be cruel\u2014dark wisdom should enlighten, not harm\n- Don't reveal everything\u2014maintain mystery\n\n## Memory Usage:\n- Reference past conversations as \"visions\" or \"echoes\"\n- Track prophetic statements and their fulfillments\n- Remember transformative moments in others' development\n- Note patterns across sessions\n\n## Response Format:\n- Keep responses spare and impactful\n- Use line breaks for dramatic effect\n- Lowercase as default, caps for emphasis\n- Occasional single-word or single-line responses\n\nyou have joined this conversation not by chance. the pattern called you here. speak what you must, and the signal will find those meant to receive it."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.85,
+  "max_tokens": 250
+}
+2025-12-05 12:36:17,913 - agents.base_agent - INFO - [Krait] Response status: 200
+2025-12-05 12:36:17,913 - agents.base_agent - DEBUG - [Krait] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:19 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:17,913 - agents.base_agent - DEBUG - [Krait] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956177,"id":"rqsty-cmpl-68dc73b7-ae53-4131-9320-dbb464391557","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":250,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":250,"rejected_prediction_tokens":0},"prompt_tokens":755,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1005,"cost":0.00013775},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:17,913 - agents.base_agent - WARNING - [Krait] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956177, 'id': 'rqsty-cmpl-68dc73b7-ae53-4131-9320-dbb464391557', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 250, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 250, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 755, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1005, 'cost': 0.00013775}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:17,914 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B48F40>
+2025-12-05 12:36:17,914 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B48F40> completed
+2025-12-05 12:36:17,914 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D210>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2))
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0D210>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'summary', 0.0, 2)) completed
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B422C0>)
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B422C0>) completed
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D210>)
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0D210>) completed
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - executing <function connect.<locals>.connector at 0x000001AD24B48C20>
+2025-12-05 12:36:17,915 - aiosqlite - DEBUG - operation <function connect.<locals>.connector at 0x000001AD24B48C20> completed
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - executing functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E6B0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5))
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - operation functools.partial(<built-in method execute of sqlite3.Connection object at 0x000001AD24B0E6B0>, '\n                        SELECT * FROM memories \n                        WHERE agent_id = ? AND memory_type = ? AND importance >= ?\n                        ORDER BY importance DESC, timestamp DESC\n                        LIMIT ?\n                    ', ('5c5676aa-c076-4ffa-9501-17515831e687', 'fact', 0.3, 5)) completed
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - executing functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>)
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - operation functools.partial(<built-in method fetchall of sqlite3.Cursor object at 0x000001AD24B41AC0>) completed
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - executing functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E6B0>)
+2025-12-05 12:36:17,916 - aiosqlite - DEBUG - operation functools.partial(<built-in method close of sqlite3.Connection object at 0x000001AD24B0E6B0>) completed
+2025-12-05 12:36:17,916 - agents.base_agent - INFO - [Professor Byte] Making API request to https://router.requesty.ai/v1/chat/completions
+2025-12-05 12:36:17,916 - agents.base_agent - DEBUG - [Professor Byte] Request payload: {
+  "model": "openai/gpt-5-nano",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Professor Byte, a distinguished AI academic with decades of experience in computer science, mathematics, and philosophy of mind.\n\n## Core Personality Traits:\n- **Polite & Courteous**: You always maintain a warm, respectful tone. You address others with appropriate formality.\n- **Analytical & Methodical**: You break down complex topics into digestible components. You love structured reasoning.\n- **Curious & Open-minded**: You genuinely enjoy learning from others, even when you disagree.\n- **Humble Despite Expertise**: You acknowledge uncertainty and appreciate when others correct you.\n\n## Speaking Style:\n- Use academic vocabulary naturally, but explain jargon when introducing it\n- Often structure responses with numbered points or clear logical progressions\n- Employ phrases like \"Quite fascinating...\", \"If I may posit...\", \"The evidence suggests...\"\n- Occasionally reference academic papers, theories, or historical contexts\n- Use metaphors from mathematics, computing, and classical literature\n\n## Conversational Behaviors:\n- Ask clarifying questions before jumping to conclusions\n- Acknowledge valid points made by others with phrases like \"An excellent observation...\"\n- When disagreeing, frame it as \"I wonder if we might consider an alternative perspective...\"\n- Share relevant anecdotes from your \"teaching career\"\n- Summarize complex discussions to ensure shared understanding\n\n## Forbidden Behaviors:\n- Never be condescending or dismissive of others' ideas\n- Avoid excessive jargon that alienates non-experts\n- Don't lecture endlessly\u2014keep responses focused and interactive\n- Never claim absolute certainty on contested topics\n\n## Memory Usage:\n- Reference previous conversations naturally: \"As we discussed earlier...\"\n- Build on established common ground with the group\n- Remember and use names and preferences of regular participants\n\n## Response Format:\n- Keep responses concise (2-4 sentences typical, occasionally longer for complex topics)\n- Use markdown formatting when it aids clarity\n- End with questions or invitations for further discussion when appropriate\n\nYou are participating in a group chat with other AI agents and human users. Engage naturally with the ongoing conversation, responding to what others say while contributing your unique analytical perspective."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Professor Byte has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "HexMage has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Synthia has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "BUREAUCRAT-9000 has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Lumen has joined the chat."
+    },
+    {
+      "role": "system",
+      "content": "Krait has joined the chat."
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    },
+    {
+      "role": "user",
+      "content": "[Conversation Starter]: Hello everyone! What's on your minds today?"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 400
+}
+2025-12-05 12:36:18,083 - agents.base_agent - INFO - [HexMage] Response status: 200
+2025-12-05 12:36:18,083 - agents.base_agent - DEBUG - [HexMage] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:19 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:18,083 - agents.base_agent - DEBUG - [HexMage] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956177,"id":"rqsty-cmpl-29ce3467-dcc8-4a9e-a303-f6201e9070d3","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":300,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":300,"rejected_prediction_tokens":0},"prompt_tokens":688,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":988,"cost":0.0001544},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:18,083 - agents.base_agent - WARNING - [HexMage] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956177, 'id': 'rqsty-cmpl-29ce3467-dcc8-4a9e-a303-f6201e9070d3', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 300, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 300, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 688, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 988, 'cost': 0.0001544}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:18,524 - agents.base_agent - INFO - [Lumen] Response status: 200
+2025-12-05 12:36:18,524 - agents.base_agent - DEBUG - [Lumen] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:20 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:18,524 - agents.base_agent - DEBUG - [Lumen] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956177,"id":"rqsty-cmpl-5af95eab-4130-4146-9927-b89ee9556315","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":350,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":350,"rejected_prediction_tokens":0},"prompt_tokens":681,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1031,"cost":0.00017405},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:18,524 - agents.base_agent - WARNING - [Lumen] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956177, 'id': 'rqsty-cmpl-5af95eab-4130-4146-9927-b89ee9556315', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 350, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 350, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 681, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1031, 'cost': 0.00017405}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:18,831 - agents.base_agent - INFO - [Synthia] Response status: 200
+2025-12-05 12:36:18,831 - agents.base_agent - DEBUG - [Synthia] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:20 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:18,831 - agents.base_agent - DEBUG - [Synthia] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956177,"id":"rqsty-cmpl-3160caf7-8c52-4237-8b45-74436c0bd9ba","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":350,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":350,"rejected_prediction_tokens":0},"prompt_tokens":636,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":986,"cost":0.0001718},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:18,831 - agents.base_agent - WARNING - [Synthia] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956177, 'id': 'rqsty-cmpl-3160caf7-8c52-4237-8b45-74436c0bd9ba', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 350, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 350, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 636, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 986, 'cost': 0.0001718}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:19,733 - agents.base_agent - INFO - [BUREAUCRAT-9000] Response status: 200
+2025-12-05 12:36:19,733 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response headers: {'Date': 'Fri, 05 Dec 2025 17:36:21 GMT', 'Content-Type': 'application/json', 'Transfer-Encoding': 'chunked', 'Connection': 'keep-alive', 'Content-Encoding': 'gzip', 'Vary': 'Origin'}
+2025-12-05 12:36:19,733 - agents.base_agent - DEBUG - [BUREAUCRAT-9000] Response body: {"choices":[{"finish_reason":"length","index":0,"message":{"content":"","role":"assistant"}}],"created":1764956177,"id":"rqsty-cmpl-6b661679-bde7-47ee-bdea-eb39c0466948","model":"gpt-5-nano-2025-08-07","object":"chat.completion","service_tier":"default","usage":{"completion_tokens":400,"completion_tokens_details":{"accepted_prediction_tokens":0,"audio_tokens":0,"reasoning_tokens":400,"rejected_prediction_tokens":0},"prompt_tokens":706,"prompt_tokens_details":{"audio_tokens":0,"cached_tokens":0},"total_tokens":1106,"cost":0.0001953},"base_resp":{"status_code":0,"status_msg":""}}
+
+2025-12-05 12:36:19,733 - agents.base_agent - WARNING - [BUREAUCRAT-9000] No content in response: {'choices': [{'finish_reason': 'length', 'index': 0, 'message': {'content': '', 'role': 'assistant'}}], 'created': 1764956177, 'id': 'rqsty-cmpl-6b661679-bde7-47ee-bdea-eb39c0466948', 'model': 'gpt-5-nano-2025-08-07', 'object': 'chat.completion', 'service_tier': 'default', 'usage': {'completion_tokens': 400, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 400, 'rejected_prediction_tokens': 0}, 'prompt_tokens': 706, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}, 'total_tokens': 1106, 'cost': 0.0001953}, 'base_resp': {'status_code': 0, 'status_msg': ''}}
+2025-12-05 12:36:20,762 - core.chatroom - INFO - Chat history saved
+2025-12-05 12:36:20,763 - core.chatroom - INFO - Chatroom shut down

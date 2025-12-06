@@ -1,0 +1,14 @@
+{
+  "jira_project_key": "ZSC",
+  "issuetype": "Epic",
+  "summary": "Retention & Data Minimization",
+  "description": "Epic to enforce data retention policies and minimize PII exposure in logs and datasets.",
+  "epicName": "Retention & Data Minimization",
+  "acceptanceCriteria": [
+    "Default 30-day retention configurable; automated purge scheduled.",
+    "PII redaction in logs; data retention policy documented.",
+    "Data deletion workflows tested; backups protected with retention-aware restore.",
+    "Policy reviewed for GDPR/CCPA readiness."
+  ],
+  "labels": ["mvp","compliance","data"]
+}

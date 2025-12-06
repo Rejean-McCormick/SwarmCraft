@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\projects\zaiswarmchat\core\token_tracker.py
+# hypothesis_version: 6.148.7
+
+['call_count', 'completion_tokens', 'prompt_tokens', 'total_tokens']

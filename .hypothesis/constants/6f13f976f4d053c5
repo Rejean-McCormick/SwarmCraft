@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\projects\zaiswarmchat\core\settings_manager.py
+# hypothesis_version: 6.148.7
+
+[2.0, 5.0, 15.0, 'You', 'architect_model', 'auto_chat', 'dark', 'data', 'default_model', 'disabled_agents', 'max_responders', 'openai/gpt-5-nano', 'r', 'response_delay_max', 'response_delay_min', 'round_delay', 'settings.json', 'swarm_model', 'theme', 'tools_enabled', 'username', 'utf-8', 'verbose', 'w']

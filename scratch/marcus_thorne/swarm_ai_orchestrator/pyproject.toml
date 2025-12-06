@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "swarm_ai_orchestrator"
+version = "0.1.0"
+description = "MVP Swarm AI Orchestrator"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+fastapi = true
+uvicorn = { extras = ["standard"] }
+pydantic = true
+
+[tool.poetry.dev-dependencies]
+pytest = true
+httpx = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

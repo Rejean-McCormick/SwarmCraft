@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-server-filesystem", "./projects"],
+      "env": {},
+      "disabled": true,
+      "autoApprove": ["read_file", "list_directory"]
+    },
+    "git": {
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "./projects"],
+      "env": {},
+      "disabled": true,
+      "autoApprove": []
+    },
+    "fetch": {
+      "command": "npx", 
+      "args": ["-y", "@anthropic/mcp-server-fetch"],
+      "env": {},
+      "disabled": true,
+      "autoApprove": []
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\AppData\Roaming\Python\Python313\site-packages\pytest_json\plugin.py
+# hypothesis_version: 6.148.7
+
+['--json', '--jsonapi', 'Platform', 'Python', '_json', 'json_environment', 'json_path', 'json_report', 'jsonapi', 'session', 'slaveinput', 'slaveoutput', 'store', 'store_true', 'terminal reporting']

@@ -1,0 +1,13 @@
+{
+  "jira_project_key": "ZSC",
+  "issuetype": "Epic",
+  "summary": "Versioning & Rollback",
+  "description": "Epic to implement semantic versioning, feature flags, and reliable rollback procedures.",
+  "epicName": "Versioning & Rollback",
+  "acceptanceCriteria": [
+    "Semantic versioning applied to all deployments; tags in IaC.",
+    "Feature flags for risky changes; rollback procedures automated and tested.",
+    "IAM/Secrets rotation and revocation procedures in place."
+  ],
+  "labels": ["mvp","devops"]
+}

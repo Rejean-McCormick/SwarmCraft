@@ -1,0 +1,13 @@
+{
+  "jira_project_key": "ZSC",
+  "issuetype": "Epic",
+  "summary": "Compliance & Audit Readiness",
+  "description": "Epic to capture GDPR/CCPA readiness, DPAs, incident response, and audit trails.",
+  "epicName": "Compliance & Audit Readiness",
+  "acceptanceCriteria": [
+    "DPIAs completed; DPAs in place for all vendors; vendor risk assessment documented.",
+    "IR playbooks updated; incident response runbooks tested.",
+    "Audit trails enabled; logs accessible to authorized personnel; tamper-evident controls where applicable."
+  ],
+  "labels": ["mvp","compliance"]
+}

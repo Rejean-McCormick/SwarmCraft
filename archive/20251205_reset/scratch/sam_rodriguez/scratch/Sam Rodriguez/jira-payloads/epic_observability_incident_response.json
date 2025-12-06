@@ -1,0 +1,13 @@
+{
+  "jira_project_key": "ZSC",
+  "issuetype": "Epic",
+  "summary": "Observability & Incident Response",
+  "description": "Epic to build OTEL dashboards, structured logging, and incident response runbooks.",
+  "epicName": "Observability & Incident Response",
+  "acceptanceCriteria": [
+    "OTEL dashboards for key services; alerts on SLI/SLO thresholds.",
+    "Structured logging; secure access to logs; log retention policies.",
+    "Incident response runbooks tested; on-call automation hooks implemented."
+  ],
+  "labels": ["mvp","observability"]
+}

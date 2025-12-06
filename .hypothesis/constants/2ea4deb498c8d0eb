@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\AppData\Roaming\Python\Python313\site-packages\pytest_json\report.py
+# hypothesis_version: 6.148.7
+
+[0.0, '-', '^Captured (.+) {}$', 'attributes', 'call', 'created_at', 'data', 'duration', 'environment', 'error', 'failed', 'id', 'included', 'longrepr', 'metadata', 'name', 'num_tests', 'outcome', 'passed', 'relationships', 'report', 'report_metadata', 'run_index', 'setup', 'skipped', 'stage_metadata', 'summary', 'teardown', 'test', 'test_metadata', 'tests', 'type', 'utf-8', 'w', 'wasxfail', 'xfail_reason', 'xfailed', 'xpassed']

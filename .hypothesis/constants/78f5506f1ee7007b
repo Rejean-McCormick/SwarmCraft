@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\projects\zaiswarmchat\config\settings.py
+# hypothesis_version: 6.148.7
+
+[0.6, 0.8, 1.0, 3.0, 100000, 128000, '8765', 'DISCORD_BOT_TOKEN', 'DISCORD_GUILD_ID', 'INFO', 'LOG_LEVEL', 'REQUESTY_API_KEY', 'WEBSOCKET_HOST', 'WEBSOCKET_PORT', 'chat_history.json', 'data', 'localhost', 'memory.db', 'openai/gpt-4o', 'openai/gpt-4o-mini', 'openai/gpt-5-nano', 'projects', 'scratch']

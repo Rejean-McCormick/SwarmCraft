@@ -1,0 +1,5 @@
+# Basic ignore to simulate git repo in sandbox
+*.pyc
+__pycache__/
+*/dist/
+*/build/

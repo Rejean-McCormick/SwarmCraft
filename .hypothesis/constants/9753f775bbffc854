@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\AppData\Roaming\Python\Python313\site-packages\linkify_it\main.py
+# hypothesis_version: 6.148.7
+
+['%TLDS%', '(', '(?:localhost|(?:(?:', '(^|(?!_)(?:[><｜]|', ')', '))(', ')\\.)+', ')|(', ')|@', '/', '//', ':', '@', '\\\\\\1', '^', '^\\/\\/', '^mailto:', 'email_fuzzy', 'ftp:', 'func', 'fuzzy_email', 'fuzzy_ip', 'fuzzy_link', 'host_fuzzy_test', 'http', 'http:', 'http://', 'https:', 'link', 'link_fuzzy', 'link_no_ip_fuzzy', 'mailto', 'mailto:', 'normalize', 'not_http', 'pretest', 'schema_at_start', 'schema_search', 'schema_test', 'src_ZPCc', 'src_auth', 'src_domain', 'src_domain_root', 'src_email_name', 'src_host_port_strict', 'src_host_strict', 'src_host_terminator', 'src_path', 'src_port', 'src_tlds', 'src_xn', 'tpl_email_fuzzy', 'tpl_host_fuzzy_test', 'tpl_link_fuzzy', 'tpl_link_no_ip_fuzzy', 'validate', '{}.{}({!r})', '|']

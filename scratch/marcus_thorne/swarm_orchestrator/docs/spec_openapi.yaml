@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info:
+  title: Swarm Orchestrator Bot Contract
+  version: 0.1.0
+  description: OpenAPI-like contract describing bot-to-bot interactions and event payloads for the Swarm Orchestrator.
+paths:
+  /tasks:
+    post:
+      summary: Submit a new task to a bot type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSubmissionRequest'
+      responses:
+        '200':
+          description: Task accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+  /events:
+    post:
+      summary: Publish an event to the event bus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventNotification'
+      responses:
+        '200':
+          description: Event published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventNotification'
+components:
+  schemas:
+    TaskSubmissionRequest:
+      type: object
+      properties:
+        bot_type:
+          type: string
+        payload:
+          type: object
+        task_id:
+          type: string
+      required:
+        - bot_type
+        - payload
+    TaskResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+        result:
+          type: object
+        error:
+          type: string
+    EventNotification:
+      type: object
+      properties:
+        topic:
+          type: string
+        payload:
+          type: object
+      required:
+        - topic
+        - payload

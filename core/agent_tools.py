@@ -1,0 +1,1201 @@
+"""
+Agent Tools System for Multi-Agent Chatroom.
+
+Provides sandboxed file operations and development tools for AI agents.
+All file operations are restricted to the scratch/ directory.
+"""
+
+import asyncio
+import json
+import os
+import subprocess
+import re
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple
+import logging
+import aiofiles
+
+# Conditional import for file locking (Unix only)
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+logger = logging.getLogger(__name__)
+
+
+def get_scratch_dir() -> Path:
+    """Get the current scratch directory (project-aware)."""
+    from config.settings import get_scratch_dir as settings_get_scratch_dir
+    return settings_get_scratch_dir()
+
+
+# Legacy constant for backwards compatibility (use get_scratch_dir() instead)
+SCRATCH_DIR = Path(__file__).parent.parent / "scratch"
+
+
+class FileLockManager:
+    """
+    Manages file locks to prevent concurrent editing collisions.
+    
+    Each agent can claim exclusive access to a file while working on it.
+    """
+    
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._locks: Dict[str, str] = {}  # path -> agent_id
+            cls._instance._lock = asyncio.Lock()
+        return cls._instance
+    
+    async def claim_file(self, path: str, agent_id: str, agent_name: str) -> Tuple[bool, str]:
+        """
+        Claim exclusive access to a file.
+        
+        Returns:
+            Tuple of (success, message)
+        """
+        async with self._lock:
+            normalized = self._normalize_path(path)
+            
+            if normalized in self._locks:
+                owner = self._locks[normalized]
+                if owner == agent_id:
+                    return True, f"You already have this file claimed"
+                return False, f"File is currently claimed by another agent"
+            
+            self._locks[normalized] = agent_id
+            logger.info(f"[{agent_name}] Claimed file: {normalized}")
+            return True, f"Successfully claimed file: {path}"
+    
+    async def release_file(self, path: str, agent_id: str, agent_name: str) -> Tuple[bool, str]:
+        """Release a file lock."""
+        async with self._lock:
+            normalized = self._normalize_path(path)
+            
+            if normalized not in self._locks:
+                return True, "File was not locked"
+            
+            if self._locks[normalized] != agent_id:
+                return False, "You don't own this lock"
+            
+            del self._locks[normalized]
+            logger.info(f"[{agent_name}] Released file: {normalized}")
+            return True, f"Released file: {path}"
+    
+    async def is_locked_by_other(self, path: str, agent_id: str) -> bool:
+        """Check if file is locked by another agent."""
+        async with self._lock:
+            normalized = self._normalize_path(path)
+            if normalized in self._locks:
+                return self._locks[normalized] != agent_id
+            return False
+    
+    async def get_all_locks(self) -> Dict[str, str]:
+        """Get all current file locks."""
+        async with self._lock:
+            return dict(self._locks)
+    
+    async def release_all_by_agent(self, agent_id: str):
+        """Release all locks held by an agent."""
+        async with self._lock:
+            to_remove = [p for p, a in self._locks.items() if a == agent_id]
+            for path in to_remove:
+                del self._locks[path]
+    
+    def _normalize_path(self, path: str) -> str:
+        """Normalize path for consistent comparison."""
+        return str(Path(path).resolve())
+
+
+def get_lock_manager() -> FileLockManager:
+    """Get the singleton lock manager."""
+    return FileLockManager()
+
+
+class AgentToolExecutor:
+    """
+    Executes tools on behalf of an agent.
+    
+    All file operations are sandboxed to the scratch directory.
+    """
+    
+    def __init__(self, agent_id: str, agent_name: str):
+        self.agent_id = agent_id
+        self.agent_name = agent_name
+        # Use dynamic scratch dir (project-aware)
+        self.scratch_dir = get_scratch_dir()
+        self.agent_workspace = self.scratch_dir / self._safe_name(agent_name)
+        self.lock_manager = get_lock_manager()
+        
+        # Ensure directories exist
+        self.scratch_dir.mkdir(parents=True, exist_ok=True)
+        self.agent_workspace.mkdir(parents=True, exist_ok=True)
+    
+    def _safe_name(self, name: str) -> str:
+        """Convert agent name to safe folder name."""
+        return re.sub(r'[^a-zA-Z0-9_-]', '_', name.lower())
+    
+    def _validate_path(self, path: str) -> Tuple[bool, Path, str]:
+        """
+        Validate that a path is within the scratch directory.
+        
+        Returns:
+            Tuple of (is_valid, resolved_path, error_message)
+        """
+        try:
+            # Handle relative paths
+            path_obj = Path(path)
+            if not path_obj.is_absolute():
+                # Check for special prefixes to allow easier access to shared/root
+                parts = path_obj.parts
+                if parts and parts[0] == "shared":
+                    # Treat 'shared/...' as relative to SCRATCH_DIR root
+                    full_path = self.scratch_dir / path
+                elif parts and parts[0] == "scratch":
+                    # Treat 'scratch/...' as relative to SCRATCH_DIR root (strip 'scratch' prefix)
+                    # path is "scratch/foo/bar", we want "foo/bar" relative to scratch_dir
+                    relative_path = Path(*parts[1:])
+                    full_path = self.scratch_dir / relative_path
+                else:
+                    # Default: relative to agent workspace
+                    full_path = self.agent_workspace / path
+            else:
+                full_path = Path(path)
+            
+            resolved = full_path.resolve()
+            
+            # Check if within scratch directory
+            try:
+                resolved.relative_to(self.scratch_dir.resolve())
+                return True, resolved, ""
+            except ValueError:
+                return False, resolved, f"Access denied: Path must be within scratch folder"
+                
+        except Exception as e:
+            return False, Path(path), f"Invalid path: {str(e)}"
+    
+    async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a tool with given arguments.
+        
+        Returns:
+            Dict with 'success' bool and 'result' or 'error' string
+        """
+        tool_map = {
+            "read_file": self._read_file,
+            "write_file": self._write_file,
+            "append_file": self._append_file,
+            "edit_file": self._edit_file,
+            "list_files": self._list_files,
+            "delete_file": self._delete_file,
+            "create_folder": self._create_folder,
+            "search_code": self._search_code,
+            "run_command": self._run_command,
+            "claim_file": self._claim_file,
+            "release_file": self._release_file,
+            "get_file_locks": self._get_file_locks,
+            "move_file": self._move_file,
+            "scaffold_project": self._scaffold_project,
+            "get_project_structure": self._get_project_structure,
+            "spawn_worker": self._spawn_worker,
+            "assign_task": self._assign_task,
+            "get_swarm_state": self._get_swarm_state,
+        }
+        
+        if tool_name not in tool_map:
+            return {"success": False, "error": f"Unknown tool: {tool_name}"}
+        
+        try:
+            result = await tool_map[tool_name](arguments)
+            logger.info(f"[{self.agent_name}] Tool {tool_name}: {'success' if result.get('success') else 'failed'}")
+            return result
+        except Exception as e:
+            logger.error(f"[{self.agent_name}] Tool {tool_name} error: {e}")
+            return {"success": False, "error": str(e)}
+    
+    async def _read_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Read file contents."""
+        path = args.get("path", "")
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"File not found: {path}"}
+        
+        if not resolved.is_file():
+            return {"success": False, "error": f"Not a file: {path}"}
+        
+        try:
+            async with aiofiles.open(resolved, 'r', encoding='utf-8') as f:
+                content = await f.read()
+            
+            # Add line numbers for context
+            lines = content.split('\n')
+            numbered = '\n'.join(f"{i+1}: {line}" for i, line in enumerate(lines))
+            
+            return {
+                "success": True,
+                "result": {
+                    "path": str(resolved.relative_to(self.scratch_dir)),
+                    "content": content,
+                    "numbered_content": numbered,
+                    "line_count": len(lines)
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to read file: {e}"}
+    
+    async def _write_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Write content to file (create or overwrite)."""
+        path = args.get("path", "")
+        content = args.get("content", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        # Check if locked by another agent
+        if await self.lock_manager.is_locked_by_other(str(resolved), self.agent_id):
+            return {"success": False, "error": "File is locked by another agent. Use claim_file first."}
+        
+        try:
+            # Ensure parent directory exists
+            resolved.parent.mkdir(parents=True, exist_ok=True)
+            
+            async with aiofiles.open(resolved, 'w', encoding='utf-8') as f:
+                await f.write(content)
+            
+            return {
+                "success": True,
+                "result": f"Successfully wrote {len(content)} bytes to {path}"
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to write file: {e}"}
+    
+    async def _edit_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Edit specific lines in a file."""
+        path = args.get("path", "")
+        start_line = args.get("start_line", 1)
+        end_line = args.get("end_line")
+        new_content = args.get("new_content", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"File not found: {path}"}
+        
+        # Check if locked by another agent
+        if await self.lock_manager.is_locked_by_other(str(resolved), self.agent_id):
+            return {"success": False, "error": "File is locked by another agent"}
+        
+        try:
+            async with aiofiles.open(resolved, 'r', encoding='utf-8') as f:
+                lines = (await f.read()).split('\n')
+            
+            # Adjust for 1-indexed lines
+            start_idx = max(0, start_line - 1)
+            end_idx = end_line if end_line else start_idx + 1
+            
+            # Replace lines
+            new_lines = new_content.split('\n') if new_content else []
+            lines = lines[:start_idx] + new_lines + lines[end_idx:]
+            
+            async with aiofiles.open(resolved, 'w', encoding='utf-8') as f:
+                await f.write('\n'.join(lines))
+            
+            return {
+                "success": True,
+                "result": f"Edited lines {start_line}-{end_line} in {path}"
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to edit file: {e}"}
+    
+    async def _list_files(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """List files in a directory."""
+        path = args.get("path", ".")
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"Directory not found: {path}"}
+        
+        if not resolved.is_dir():
+            return {"success": False, "error": f"Not a directory: {path}"}
+        
+        try:
+            items = []
+            for item in resolved.iterdir():
+                rel_path = item.relative_to(self.scratch_dir)
+                items.append({
+                    "name": item.name,
+                    "path": str(rel_path),
+                    "type": "directory" if item.is_dir() else "file",
+                    "size": item.stat().st_size if item.is_file() else None
+                })
+            
+            return {
+                "success": True,
+                "result": {
+                    "directory": str(resolved.relative_to(self.scratch_dir)),
+                    "items": items
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to list files: {e}"}
+    
+    async def _delete_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Delete a file."""
+        path = args.get("path", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"File not found: {path}"}
+        
+        # Check if locked by another agent
+        if await self.lock_manager.is_locked_by_other(str(resolved), self.agent_id):
+            return {"success": False, "error": "File is locked by another agent"}
+        
+        try:
+            if resolved.is_file():
+                resolved.unlink()
+            else:
+                return {"success": False, "error": "Cannot delete directories with this tool"}
+            
+            return {"success": True, "result": f"Deleted {path}"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to delete: {e}"}
+    
+    async def _create_folder(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a folder."""
+        path = args.get("path", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        try:
+            resolved.mkdir(parents=True, exist_ok=True)
+            return {"success": True, "result": f"Created folder: {path}"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to create folder: {e}"}
+    
+    async def _search_code(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Search for text in files."""
+        query = args.get("query", "")
+        path = args.get("path", ".")
+        
+        if not query:
+            return {"success": False, "error": "query is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        try:
+            results = []
+            search_dir = resolved if resolved.is_dir() else resolved.parent
+            
+            for file_path in search_dir.rglob("*"):
+                if file_path.is_file():
+                    try:
+                        async with aiofiles.open(file_path, 'r', encoding='utf-8') as f:
+                            content = await f.read()
+                        
+                        for i, line in enumerate(content.split('\n'), 1):
+                            if query.lower() in line.lower():
+                                results.append({
+                                    "file": str(file_path.relative_to(self.scratch_dir)),
+                                    "line": i,
+                                    "content": line.strip()[:200]
+                                })
+                    except:
+                        pass  # Skip binary/unreadable files
+            
+            return {
+                "success": True,
+                "result": {
+                    "query": query,
+                    "matches": results[:50]  # Limit results
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Search failed: {e}"}
+    
+    async def _run_command(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Run a shell command (with safety restrictions)."""
+        command = args.get("command", "")
+        
+        if not command:
+            return {"success": False, "error": "command is required"}
+        
+        # Allowed commands (whitelist approach)
+        allowed_prefixes = [
+            "python", "pip", "node", "npm", "npx",
+            "git status", "git log", "git diff", "git branch",
+            "ls", "dir", "cat", "type", "echo", "head", "tail",
+            "grep", "find", "wc"
+        ]
+        
+        cmd_lower = command.lower().strip()
+        is_allowed = any(cmd_lower.startswith(prefix) for prefix in allowed_prefixes)
+        
+        if not is_allowed:
+            return {
+                "success": False,
+                "error": f"Command not allowed. Allowed: {', '.join(allowed_prefixes)}"
+            }
+        
+        try:
+            # Run in agent workspace
+            proc = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=str(self.agent_workspace)
+            )
+            
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+            
+            return {
+                "success": proc.returncode == 0,
+                "result": {
+                    "stdout": stdout.decode('utf-8', errors='replace')[:5000],
+                    "stderr": stderr.decode('utf-8', errors='replace')[:2000],
+                    "return_code": proc.returncode
+                }
+            }
+        except asyncio.TimeoutError:
+            return {"success": False, "error": "Command timed out (30s limit)"}
+        except Exception as e:
+            return {"success": False, "error": f"Command failed: {e}"}
+    
+    async def _claim_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Claim exclusive access to a file."""
+        path = args.get("path", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        success, message = await self.lock_manager.claim_file(
+            str(resolved), self.agent_id, self.agent_name
+        )
+        
+        return {"success": success, "result" if success else "error": message}
+    
+    async def _release_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Release a file lock."""
+        path = args.get("path", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        success, message = await self.lock_manager.release_file(
+            str(resolved), self.agent_id, self.agent_name
+        )
+        
+        return {"success": success, "result" if success else "error": message}
+    
+    async def _get_file_locks(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Get all current file locks."""
+        locks = await self.lock_manager.get_all_locks()
+        return {
+            "success": True,
+            "result": {"locks": locks}
+        }
+    
+    async def _spawn_worker(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Spawn a new worker agent.
+        
+        Accepts either a role key (e.g., "backend_dev") or display name 
+        (e.g., "Codey McBackend") and resolves it to the correct role.
+        """
+        role = args.get("role", "")
+        if not role:
+            return {"success": False, "error": "role is required"}
+        
+        # Resolve display name or role key to valid role key
+        from agents import resolve_role, AGENT_CLASSES, DISPLAY_NAME_TO_ROLE
+        try:
+            resolved_role = resolve_role(role)
+        except ValueError:
+            valid_roles = list(AGENT_CLASSES.keys())
+            valid_names = list(DISPLAY_NAME_TO_ROLE.keys())
+            return {
+                "success": False, 
+                "error": f"Unknown role: '{role}'. Valid role keys: {valid_roles}. Valid display names: {valid_names}"
+            }
+            
+        from core.chatroom import get_chatroom
+        chatroom = await get_chatroom()
+        agent = await chatroom.spawn_agent(resolved_role)
+        
+        if agent:
+            return {"success": True, "result": f"Spawned agent: {agent.name} ({resolved_role})"}
+        return {"success": False, "error": f"Failed to spawn agent with role: {resolved_role}"}
+
+    async def _create_task(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new task."""
+        description = args.get("description", "")
+        if not description:
+            return {"success": False, "error": "description is required"}
+            
+        from core.task_manager import get_task_manager
+        tm = get_task_manager()
+        task = tm.create_task(description)
+        return {"success": True, "result": f"Task created: {task.id}"}
+
+    async def _assign_task(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Assign a task to an agent."""
+        agent_name = args.get("agent_name", "")
+        description = args.get("description", "")
+        
+        if not agent_name:
+            return {"success": False, "error": "agent_name is required"}
+        if not description:
+            return {"success": False, "error": "description is required"}
+            
+        from core.chatroom import get_chatroom
+        chatroom = await get_chatroom()
+        
+        success = await chatroom.assign_task(agent_name, description)
+        
+        if success:
+            return {"success": True, "result": f"Assigned task to {agent_name}: {description[:50]}..."}
+        return {"success": False, "error": f"Failed to assign task to {agent_name} - agent not found"}
+
+    async def _get_swarm_state(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Get the state of all agents and tasks."""
+        from core.task_manager import get_task_manager
+        from core.chatroom import get_chatroom
+        
+        tm = get_task_manager()
+        chatroom = await get_chatroom()
+        
+        tasks = [t.to_dict() for t in tm.get_all_tasks()]
+        agents = [a.get_info() for a in chatroom._agents.values()]
+        
+        return {
+            "success": True,
+            "result": {
+                "agents": agents,
+                "tasks": tasks
+            }
+        }
+
+    async def _append_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Append content to an existing file."""
+        path = args.get("path", "")
+        content = args.get("content", "")
+        
+        if not path:
+            return {"success": False, "error": "path is required"}
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"File not found: {path}. Use write_file to create new files."}
+        
+        # Check if locked by another agent
+        if await self.lock_manager.is_locked_by_other(str(resolved), self.agent_id):
+            return {"success": False, "error": "File is locked by another agent."}
+        
+        try:
+            async with aiofiles.open(resolved, 'a', encoding='utf-8') as f:
+                await f.write(content)
+            
+            return {
+                "success": True,
+                "result": f"Successfully appended {len(content)} bytes to {path}"
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to append to file: {e}"}
+
+    async def _scaffold_project(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a project scaffold with common structure."""
+        project_type = args.get("project_type", "python")
+        project_name = args.get("project_name", "myproject")
+        
+        valid, base_path, error = self._validate_path(f"shared/{project_name}")
+        if not valid:
+            return {"success": False, "error": error}
+        
+        try:
+            base_path.mkdir(parents=True, exist_ok=True)
+            
+            created_files = []
+            
+            if project_type == "python":
+                # Python project structure
+                dirs = ["src", "tests", "docs", "config"]
+                for d in dirs:
+                    (base_path / d).mkdir(exist_ok=True)
+                
+                # Create __init__.py files
+                (base_path / "src" / "__init__.py").touch()
+                (base_path / "tests" / "__init__.py").touch()
+                
+                # Create basic files
+                files = {
+                    "README.md": f"# {project_name}\n\nProject description here.\n\n## Installation\n\n```bash\npip install -r requirements.txt\n```\n\n## Usage\n\n```python\n# Example usage\n```\n",
+                    "requirements.txt": "# Project dependencies\n",
+                    ".gitignore": "__pycache__/\n*.py[cod]\n*$py.class\n.env\nvenv/\n.venv/\ndist/\nbuild/\n*.egg-info/\n",
+                    "src/main.py": '"""Main entry point."""\n\ndef main():\n    print("Hello, World!")\n\nif __name__ == "__main__":\n    main()\n',
+                    "tests/test_main.py": '"""Tests for main module."""\nimport pytest\nfrom src.main import main\n\ndef test_main():\n    # Add tests here\n    pass\n',
+                    "config/settings.py": '"""Configuration settings."""\nimport os\nfrom dotenv import load_dotenv\n\nload_dotenv()\n\n# Add configuration here\n',
+                }
+                
+            elif project_type == "node" or project_type == "javascript":
+                dirs = ["src", "tests", "public", "config"]
+                for d in dirs:
+                    (base_path / d).mkdir(exist_ok=True)
+                
+                files = {
+                    "README.md": f"# {project_name}\n\nProject description here.\n\n## Installation\n\n```bash\nnpm install\n```\n\n## Usage\n\n```bash\nnpm start\n```\n",
+                    "package.json": f'{{\n  "name": "{project_name}",\n  "version": "1.0.0",\n  "description": "",\n  "main": "src/index.js",\n  "scripts": {{\n    "start": "node src/index.js",\n    "test": "jest"\n  }},\n  "dependencies": {{}},\n  "devDependencies": {{}}\n}}',
+                    ".gitignore": "node_modules/\n.env\ndist/\ncoverage/\n*.log\n",
+                    "src/index.js": '// Main entry point\nconsole.log("Hello, World!");\n',
+                    "tests/index.test.js": '// Tests\ndescribe("Main", () => {\n  test("should work", () => {\n    expect(true).toBe(true);\n  });\n});\n',
+                }
+                
+            elif project_type == "react":
+                dirs = ["src", "src/components", "src/hooks", "src/utils", "public", "tests"]
+                for d in dirs:
+                    (base_path / d).mkdir(exist_ok=True)
+                
+                files = {
+                    "README.md": f"# {project_name}\n\nReact application.\n\n## Getting Started\n\n```bash\nnpm install\nnpm start\n```\n",
+                    "package.json": f'{{\n  "name": "{project_name}",\n  "version": "1.0.0",\n  "dependencies": {{\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  }}\n}}',
+                    ".gitignore": "node_modules/\n.env\nbuild/\ndist/\n",
+                    "src/App.jsx": 'import React from "react";\n\nfunction App() {\n  return (\n    <div className="App">\n      <h1>Hello, World!</h1>\n    </div>\n  );\n}\n\nexport default App;\n',
+                    "src/index.jsx": 'import React from "react";\nimport ReactDOM from "react-dom/client";\nimport App from "./App";\n\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(<App />);\n',
+                    "public/index.html": '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>' + project_name + '</title>\n</head>\n<body>\n  <div id="root"></div>\n</body>\n</html>\n',
+                }
+                
+            else:
+                # Generic project
+                dirs = ["src", "tests", "docs"]
+                for d in dirs:
+                    (base_path / d).mkdir(exist_ok=True)
+                
+                files = {
+                    "README.md": f"# {project_name}\n\nProject description here.\n",
+                    ".gitignore": "*.log\n.env\n",
+                }
+            
+            # Write all files
+            for filename, content in files.items():
+                filepath = base_path / filename
+                filepath.parent.mkdir(parents=True, exist_ok=True)
+                async with aiofiles.open(filepath, 'w', encoding='utf-8') as f:
+                    await f.write(content)
+                created_files.append(str(filepath.relative_to(self.scratch_dir)))
+            
+            return {
+                "success": True,
+                "result": {
+                    "message": f"Created {project_type} project scaffold",
+                    "project_path": f"shared/{project_name}",
+                    "created_files": created_files
+                }
+            }
+        except Exception as e:
+            return {"success": False, "error": f"Failed to scaffold project: {e}"}
+
+    async def _get_project_structure(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Get a tree view of the project structure."""
+        path = args.get("path", "shared")
+        max_depth = args.get("max_depth", 4)
+        
+        valid, resolved, error = self._validate_path(path)
+        if not valid:
+            return {"success": False, "error": error}
+        
+        if not resolved.exists():
+            return {"success": False, "error": f"Path not found: {path}"}
+        
+        def build_tree(dir_path: Path, prefix: str = "", depth: int = 0) -> str:
+            if depth > max_depth:
+                return prefix + "...\n"
+            
+            lines = []
+            try:
+                items = sorted(dir_path.iterdir(), key=lambda x: (not x.is_dir(), x.name))
+                for i, item in enumerate(items):
+                    is_last = i == len(items) - 1
+                    connector = "└── " if is_last else "├── "
+                    
+                    if item.is_dir():
+                        lines.append(f"{prefix}{connector}{item.name}/")
+                        extension = "    " if is_last else "│   "
+                        lines.append(build_tree(item, prefix + extension, depth + 1))
+                    else:
+                        size = item.stat().st_size
+                        size_str = f"{size}B" if size < 1024 else f"{size//1024}KB"
+                        lines.append(f"{prefix}{connector}{item.name} ({size_str})")
+            except PermissionError:
+                lines.append(f"{prefix}[Permission Denied]")
+            
+            return "\n".join(lines)
+        
+        tree = f"{path}/\n{build_tree(resolved)}"
+        
+        return {
+            "success": True,
+            "result": tree
+        }
+
+    async def _move_file(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Move or rename a file."""
+        source = args.get("source", "")
+        destination = args.get("destination", "")
+        
+        if not source or not destination:
+            return {"success": False, "error": "source and destination are required"}
+            
+        valid_src, res_src, err_src = self._validate_path(source)
+        if not valid_src:
+            return {"success": False, "error": f"Source error: {err_src}"}
+            
+        valid_dst, res_dst, err_dst = self._validate_path(destination)
+        if not valid_dst:
+            return {"success": False, "error": f"Destination error: {err_dst}"}
+            
+        if not res_src.exists():
+            return {"success": False, "error": f"Source file not found: {source}"}
+            
+        # Check locks
+        if await self.lock_manager.is_locked_by_other(str(res_src), self.agent_id):
+            return {"success": False, "error": "Source file is locked by another agent"}
+            
+        if res_dst.exists() and await self.lock_manager.is_locked_by_other(str(res_dst), self.agent_id):
+            return {"success": False, "error": "Destination file is locked by another agent"}
+            
+        try:
+            # Ensure destination directory exists
+            res_dst.parent.mkdir(parents=True, exist_ok=True)
+            
+            import shutil
+            # Use shutil.move for robustness
+            shutil.move(str(res_src), str(res_dst))
+            
+            return {"success": True, "result": f"Moved {source} to {destination}"}
+        except Exception as e:
+            return {"success": False, "error": f"Failed to move file: {e}"}
+
+
+# Tool definitions for the API
+TOOL_DEFINITIONS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the contents of a file. Returns the file content with line numbers.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file (relative to your workspace)"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Create or overwrite a file with new content. You MUST provide the COMPLETE file content. Do not use placeholders or truncate code.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to write to the file"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "edit_file",
+            "description": "Edit specific lines in an existing file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file"
+                    },
+                    "start_line": {
+                        "type": "integer",
+                        "description": "Starting line number (1-indexed)"
+                    },
+                    "end_line": {
+                        "type": "integer",
+                        "description": "Ending line number (inclusive)"
+                    },
+                    "new_content": {
+                        "type": "string",
+                        "description": "New content to replace the lines"
+                    }
+                },
+                "required": ["path", "start_line", "end_line", "new_content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_files",
+            "description": "List files and folders in a directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Directory path (default: current workspace)"
+                    }
+                }
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Delete a file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to delete"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "move_file",
+            "description": "Move or rename a file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Current path of the file"
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "New path for the file"
+                    }
+                },
+                "required": ["source", "destination"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_folder",
+            "description": "Create a folder (including parent folders if needed).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path of the folder to create"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_code",
+            "description": "Search for text/code patterns in files.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Text to search for"
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Directory to search in (default: workspace)"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_command",
+            "description": "Run a shell command. Limited to safe commands like python, pip, node, npm, git status/log/diff, ls, cat, grep.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "The command to run"
+                    }
+                },
+                "required": ["command"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "claim_file",
+            "description": "Claim exclusive access to a file before editing. Other agents won't be able to edit it until you release it.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to claim"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "release_file",
+            "description": "Release your exclusive claim on a file so others can edit it.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to release"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_file_locks",
+            "description": "See which files are currently claimed/locked by agents.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "spawn_worker",
+            "description": "Spawn a new worker agent with a specific role. Use this to scale the swarm.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "description": "The role of the agent (e.g., 'backend_dev', 'frontend_dev', 'qa_engineer')"
+                    }
+                },
+                "required": ["role"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "assign_task",
+            "description": "Assign a task to a specific agent. This wakes them up and sets their status to WORKING.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "agent_name": {
+                        "type": "string",
+                        "description": "The name of the agent to assign the task to"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed description of the task to be performed"
+                    }
+                },
+                "required": ["agent_name", "description"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_swarm_state",
+            "description": "Get the current state of the swarm, including all agents (status) and tasks (status).",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "append_file",
+            "description": "Append content to the end of an existing file without overwriting.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to append to"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to append to the file"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "scaffold_project",
+            "description": "Create a project scaffold with standard directory structure and boilerplate files.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_type": {
+                        "type": "string",
+                        "description": "Type of project: 'python', 'node', 'react', or 'generic'",
+                        "enum": ["python", "node", "react", "generic"]
+                    },
+                    "project_name": {
+                        "type": "string",
+                        "description": "Name of the project (will be used as folder name)"
+                    }
+                },
+                "required": ["project_type", "project_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_project_structure",
+            "description": "Get a tree view of the project directory structure.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the directory (default: 'shared')"
+                    },
+                    "max_depth": {
+                        "type": "integer",
+                        "description": "Maximum depth to traverse (default: 4)"
+                    }
+                }
+            }
+        }
+    }
+]
+
+
+# Orchestrator-only tools (for Architect)
+ORCHESTRATOR_TOOL_NAMES = {"spawn_worker", "assign_task", "get_swarm_state", "read_file", "write_file", "list_files", "get_project_structure"}
+
+ORCHESTRATOR_TOOLS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] in ORCHESTRATOR_TOOL_NAMES]
+
+# Worker tools (everything except orchestration)
+WORKER_TOOL_NAMES = {"read_file", "write_file", "edit_file", "list_files", "delete_file", "move_file", 
+                     "create_folder", "search_code", "run_command", "claim_file", "release_file", 
+                     "get_file_locks", "append_file", "get_project_structure"}
+
+WORKER_TOOLS = [t for t in TOOL_DEFINITIONS if t["function"]["name"] in WORKER_TOOL_NAMES]
+
+
+def get_tools_for_agent(agent_name: str) -> list:
+    """Get the appropriate tool set for an agent based on their role."""
+    if "Architect" in agent_name:
+        return ORCHESTRATOR_TOOLS
+    return WORKER_TOOLS
+
+
+def get_tools_system_prompt() -> str:
+    """Get the system prompt addition for tool usage."""
+    return """
+
+## FILE TOOLS
+You have access to tools for working with files in your scratch workspace. Use them to:
+- Read, write, and edit code files
+- Search for code patterns
+- Run safe commands (python, pip, node, npm, git status/log, etc.)
+
+IMPORTANT RULES:
+1. All file paths are relative to your workspace folder
+2. Before editing a file that others might work on, use claim_file to get exclusive access
+3. Release files with release_file when done
+4. Keep responses SHORT when not using tools - tools do the heavy lifting
+5. Check file locks before editing shared files
+
+Your workspace folder: scratch/{agent_name}/
+Shared folder: scratch/shared/
+"""

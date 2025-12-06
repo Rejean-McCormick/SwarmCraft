@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Log Sink Audit Wiring",
+  "type": "object",
+  "properties": {
+    "endpoint": {"type": "string"},
+    "auth": {
+      "type": "object",
+      "properties": {
+        "type": {"type": "string"},
+        "mtls_cert": {"type": "string"},
+        "mtls_key": {"type": "string"},
+        "ca_cert": {"type": "string"}
+      },
+      "required": ["type"]
+    },
+    "vault": {
+      "type": "object",
+      "properties": {
+        "address": {"type": "string"},
+        "path": {"type": "string"},
+        "secret_name": {"type": "string"},
+        "role": {"type": "string"}
+      },
+      "required": ["address", "path", "secret_name"]
+    },
+    "retention_days": {"type": "integer"},
+    "enable_request_id": {"type": "boolean"},
+    "test_mode": {"type": "boolean"},
+    "rotation": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "rotation_window_days": {"type": "integer"}
+      }
+    }
+  },
+  "required": ["endpoint", "auth", "vault"]
+}

@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\projects\zaiswarmchat\core\memory_store.py
+# hypothesis_version: 6.148.7
+
+[0.0, 0.3, 'agent_id', 'avg_importance', 'content', 'fact', 'facts', 'id', 'importance', 'memory_type', 'observations', 'source_messages', 'summaries', 'summary', 'timestamp', 'total']

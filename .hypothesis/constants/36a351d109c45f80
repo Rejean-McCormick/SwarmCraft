@@ -1,0 +1,4 @@
+# file: C:\Users\kyle\projects\zaiswarmchat\core\summarizer.py
+# hypothesis_version: 6.148.7
+
+[0.3, 0.5, 0.8, 200, 500, 600, '\n## Important Facts:', '%H:%M', 'Authorization', 'Content-Type', '```', 'application/json', 'choices', 'content', 'fact', 'facts', 'importance', 'json', 'max_tokens', 'message', 'messages', 'model', 'role', 'summary', 'system', 'temperature', 'user']
