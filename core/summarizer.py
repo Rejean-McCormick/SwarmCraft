@@ -17,8 +17,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import (
-    REQUESTY_API_KEY,
-    REQUESTY_API_BASE_URL,
+    LLM_API_KEY,
+    LLM_API_BASE_URL,
     DEFAULT_MODEL,
     SUMMARIZE_EVERY_N_MESSAGES,
     MAX_RESPONSE_TOKENS
@@ -67,11 +67,11 @@ class Summarizer:
         Initialize the summarizer.
         
         Args:
-            model: Z.ai model to use for summarization
+            model: LLM model to use for summarization
         """
         self.model = model
-        self.api_key = REQUESTY_API_KEY
-        self.api_url = REQUESTY_API_BASE_URL
+        self.api_key = LLM_API_KEY
+        self.api_url = LLM_API_BASE_URL
         self._session: Optional[aiohttp.ClientSession] = None
     
     async def _get_session(self) -> aiohttp.ClientSession:

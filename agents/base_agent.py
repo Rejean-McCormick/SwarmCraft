@@ -19,8 +19,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import (
-    REQUESTY_API_KEY,
-    REQUESTY_API_BASE_URL,
+    LLM_API_KEY,
+    LLM_API_BASE_URL,
     DEFAULT_MODEL,
     SHORT_TERM_MEMORY_SIZE,
     DEFAULT_TEMPERATURE,
@@ -318,14 +318,14 @@ Keep chat responses concise and focused on the task. Use the tools for the heavy
         Returns:
             Full API response data, or empty dict on error
         """
-        if not REQUESTY_API_KEY:
-            logger.error("Requesty API key not configured")
+        if not LLM_API_KEY:
+            logger.error("LLM API key not configured")
             return {}
         
         session = await self._get_session()
         
         headers = {
-            "Authorization": f"Bearer {REQUESTY_API_KEY}",
+            "Authorization": f"Bearer {LLM_API_KEY}",
             "Content-Type": "application/json"
         }
         
@@ -372,7 +372,7 @@ Keep chat responses concise and focused on the task. Use the tools for the heavy
         
         try:
             async with session.post(
-                REQUESTY_API_BASE_URL,
+                LLM_API_BASE_URL,
                 headers=headers,
                 json=payload,
                 timeout=aiohttp.ClientTimeout(total=600)  # 10 minutes for large generations

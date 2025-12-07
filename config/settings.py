@@ -14,12 +14,18 @@ from typing import Optional
 load_dotenv()
 
 # ============================================================================
-# REQUESTY API Configuration
+# LLM API Configuration (configurable provider)
 # ============================================================================
-REQUESTY_API_KEY = os.getenv("REQUESTY_API_KEY", "")
-REQUESTY_API_BASE_URL = "https://router.requesty.ai/v1/chat/completions"
+# Generic API key and base URL so you can point at OpenRouter, Requesty, or others.
+# Defaults are set for OpenRouter.
+LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("REQUESTY_API_KEY", "")
+LLM_API_BASE_URL = os.getenv(
+    "LLM_API_BASE_URL",
+    # Default to OpenRouter-compatible chat completions endpoint
+    os.getenv("OPENROUTER_API_BASE_URL", "https://openrouter.ai/api/v1/chat/completions")
+)
 
-# Available models via Requesty (check requesty.ai for current list)
+# Available models via default provider (check your provider docs for current list)
 AVAILABLE_MODELS = [
     "openai/gpt-5-nano",
     "openai/gpt-4o-mini",
@@ -132,8 +138,8 @@ def validate_config():
     """Validate required configuration is present."""
     errors = []
     
-    if not REQUESTY_API_KEY:
-        errors.append("REQUESTY_API_KEY is not set. Please set it in your .env file.")
+    if not LLM_API_KEY:
+        errors.append("LLM_API_KEY (or OPENROUTER_API_KEY / REQUESTY_API_KEY) is not set. Please set it in your .env file.")
     
     if errors:
         return False, errors
