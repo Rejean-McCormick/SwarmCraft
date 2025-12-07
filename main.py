@@ -923,12 +923,13 @@ def setup_env_interactive():
     from dotenv import load_dotenv
     
     env_path = Path(__file__).parent / ".env"
-    existing_key = os.getenv("REQUESTY_API_KEY", "")
+    # Prefer generic LLM_API_KEY, but also support provider-specific envs
+    existing_key = os.getenv("LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("REQUESTY_API_KEY", "")
     
     # Try loading .env first
     if env_path.exists():
         load_dotenv(env_path, override=True)
-        existing_key = os.getenv("REQUESTY_API_KEY", "")
+        existing_key = os.getenv("LLM_API_KEY") or os.getenv("OPENROUTER_API_KEY") or os.getenv("REQUESTY_API_KEY", "")
     
     if env_path.exists() and existing_key:
         return True
@@ -944,11 +945,12 @@ def setup_env_interactive():
         print(f"{Colors.SYSTEM}API key not configured.{Colors.RESET}")
     print()
     
-    print(f"Get your Requesty API key at: {Colors.CYAN}https://requesty.ai{Colors.RESET}")
+    print(f"Defaulting to OpenRouter endpoint. Get an API key at: {Colors.CYAN}https://openrouter.ai{Colors.RESET}")
+    print(f"(You can also use other providers by changing LLM_API_BASE_URL in .env)")
     print()
     
     while True:
-        api_key = input(f"{Colors.BOLD}Enter your Requesty API key (or 'q' to quit): {Colors.RESET}").strip()
+        api_key = input(f"{Colors.BOLD}Enter your LLM API key (or 'q' to quit): {Colors.RESET}").strip()
         
         if api_key.lower() == 'q':
             print("Setup cancelled.")
@@ -962,7 +964,13 @@ def setup_env_interactive():
     
     # Write .env
     env_content = f"""# Multi-Agent Chatroom Configuration
-REQUESTY_API_KEY={api_key}
+LLM_API_KEY={api_key}
+LLM_API_BASE_URL=https://openrouter.ai/api/v1/chat/completions
+# Optional aliases for convenience / backwards compatibility:
+# OPENROUTER_API_KEY={api_key}
+# OPENROUTER_API_BASE_URL=https://openrouter.ai/api/v1/chat/completions
+# REQUESTY_API_KEY={api_key}
+# REQUESTY_API_BASE_URL=https://router.requesty.ai/v1/chat/completions
 WEBSOCKET_HOST=localhost
 WEBSOCKET_PORT=8765
 LOG_LEVEL=INFO
