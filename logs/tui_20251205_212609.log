@@ -1,8 +1,0 @@
-2025-12-05 21:26:09,663 - core.settings_manager - INFO - Settings loaded from file
-2025-12-05 21:26:17,488 - core.project_manager - INFO - Created project: slop_bot
-2025-12-05 21:26:17,488 - core.project_manager - INFO - Switched to project: slop_bot
-2025-12-05 21:26:18,513 - asyncio - DEBUG - Using proactor: IocpProactor
-2025-12-05 21:26:18,540 - core.chatroom - INFO - Agent Bossy McArchitect added to chatroom
-2025-12-05 21:26:18,540 - core.chatroom - INFO - Chatroom initialized with 1 agents
-2025-12-05 21:28:36,655 - core.chatroom - INFO - Chat history saved
-2025-12-05 21:28:36,656 - core.chatroom - INFO - Chatroom shut down

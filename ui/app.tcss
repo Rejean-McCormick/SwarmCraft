@@ -1,0 +1,169 @@
+/* TextCraft Theme Definition 
+Role: The Visual Style Layer
+*/
+
+/* --- Variables --- */
+$background: #0a0a0f;    /* Deep Void Black */
+$surface: #121216;       /* Dark Panel Grey */
+$accent: #00ff9d;        /* Cyberpunk Neon Green */
+$secondary: #00d2ff;     /* Hologram Blue */
+$warning: #f1c40f;       /* Alert Yellow */
+$error: #e74c3c;         /* Critical Red */
+$text: #ecf0f1;          /* Ice White */
+$dim: #7f8c8d;           /* Muted Grey */
+$border: #2c3e50;        /* Panel Border */
+
+/* --- Global Screen Layout --- */
+Screen {
+    background: $background;
+    color: $text;
+}
+
+DirectorScreen {
+    layout: grid;
+    grid-size: 3 2;
+    grid-columns: 20% 60% 20%;
+    grid-rows: 1fr 3; /* Main content takes available space, Input takes 3 lines */
+}
+
+/* --- Panel Containers --- */
+
+/* Column 1: Context (Left) */
+#context-panel {
+    dock: left;
+    height: 100%;
+    background: $surface;
+    border-right: solid $border;
+    padding: 0 1;
+}
+
+/* Column 2: Action (Center) */
+#action-panel {
+    height: 100%;
+    background: $background;
+    /* Center panel has no side borders to create 'open' feel */
+}
+
+/* Column 3: Progress (Right) */
+#progress-panel {
+    dock: right;
+    height: 100%;
+    background: $surface;
+    border-left: solid $border;
+    padding: 0 1;
+}
+
+/* --- Widget Styling --- */
+
+/* Headers */
+.header-text {
+    text-align: center;
+    color: $accent;
+    text-style: bold;
+    background: $surface;
+    border-bottom: solid $accent;
+    padding: 1 0;
+    margin-bottom: 1;
+}
+
+/* Cast List */
+#cast-list {
+    height: auto;
+    max-height: 40%;
+    margin-bottom: 1;
+    border-bottom: dashed $dim;
+}
+
+/* Dynamic Cards */
+#location-card {
+    height: auto;
+    color: $secondary;
+    padding: 1;
+    margin-bottom: 1;
+    border: solid $dim;
+}
+
+#tool-card {
+    height: 3;
+    content-align: center middle;
+    background: $surface;
+    color: $dim;
+    border: dashed $dim;
+}
+
+/* Flashing effect for active tool */
+#tool-card.active {
+    color: $background;
+    background: $warning;
+    text-style: bold;
+    border: solid $warning;
+}
+
+/* --- Action Panel Specifics --- */
+
+/* The Prose Stream (Reading Area) */
+#prose-stream {
+    height: 75%;
+    border-bottom: solid $border;
+    background: $background;
+    padding: 1 2;
+    overflow-y: scroll;
+    scrollbar-color: $accent;
+}
+
+/* The System Log (Debug Area) */
+#system-log {
+    height: 25%;
+    background: #000000;
+    color: $dim;
+    border-top: solid $border;
+    padding: 0 1;
+    text-style: italic;
+}
+
+/* --- Progress Panel Specifics --- */
+
+DataTable {
+    height: 60%;
+    border-bottom: solid $border;
+    scrollbar-color: $secondary;
+}
+
+DataTable > .datatable--header {
+    text-style: bold;
+    color: $secondary;
+    background: $surface;
+}
+
+DataTable > .datatable--cursor {
+    background: $accent;
+    color: $background;
+}
+
+ProgressBar {
+    margin: 1 0;
+    color: $accent;
+}
+
+/* --- Input Bar (Bottom) --- */
+
+#director-input {
+    column-span: 3;
+    dock: bottom;
+    height: 3;
+    border-top: solid $accent;
+    background: $surface;
+    color: $accent;
+    padding: 0 1;
+}
+
+#director-input:focus {
+    border-top: double $accent;
+}
+
+/* --- Utility Classes for Text Colors --- */
+.status-locked { color: $accent; text-style: bold; }
+.status-review { color: $secondary; }
+.status-drafting { color: $warning; }
+.status-missing { color: $error; }
+.status-unknown { color: $dim; }

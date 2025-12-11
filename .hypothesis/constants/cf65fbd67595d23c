@@ -1,4 +1,0 @@
-# file: C:\Users\kyle\projects\zaiswarmchat\core\models.py
-# hypothesis_version: 6.148.7
-
-[0.5, 0.6, 0.8, 500, 'MemoryEntry', 'Message', 'Task', 'active_agents', 'agent_id', 'assistant', 'chat', 'completed', 'connected_humans', 'content', 'fact', 'failed', 'glm-4-flash', 'human', 'id', 'idle', 'importance', 'in_progress', 'is_running', 'join', 'leave', 'max_tokens', 'memory_type', 'memory_update', 'message_type', 'messages', 'metadata', 'model', 'name', 'pending', 'role', 'round_number', 'sender_id', 'sender_name', 'source_messages', 'speak_probability', 'status', 'system', 'system_notice', 'system_prompt', 'temperature', 'timestamp', 'user', 'working']

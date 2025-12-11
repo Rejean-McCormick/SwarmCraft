@@ -1,0 +1,61 @@
+{
+  "sector_4": {
+    "name": "Sector 4 (The Rust Belt)",
+    "type": "District",
+    "atmosphere": {
+      "lighting": "Dim amber streetlights, flickering neon signs (mostly glitching)",
+      "sounds": "Distant sirens, hum of heavy machinery, dripping water",
+      "smells": "Ozone, stale rain, frying street food"
+    },
+    "description": "A decaying industrial residential zone on the lower levels of the city. The buildings are brutalist concrete structures stained with acid rain. Cables hang like vines between rooftops.",
+    "key_landmarks": [
+      "Doc Riley's Workshop",
+      "The Black Lotus Bar"
+    ]
+  },
+  "doc_rileys_workshop": {
+    "name": "Doc Riley's Workshop",
+    "type": "Interior",
+    "parent_location": "sector_4",
+    "atmosphere": {
+      "lighting": "Bright white surgical lamps over workbenches, dark corners",
+      "sounds": "The whir of cooling fans, soldering iron hiss, classical music playing on a vintage radio",
+      "smells": "Oil, solder fumes, old coffee"
+    },
+    "description": "A cluttered basement workshop filled with scavenged tech. Servers hum in racks along the back wall. The center is dominated by a reinforced operating table used for illicit repairs.",
+    "items_of_interest": [
+      "The main terminal (air-gapped)",
+      "A jar of synthetic eyes on the shelf"
+    ]
+  },
+  "black_lotus_bar": {
+    "name": "The Black Lotus",
+    "type": "Interior",
+    "parent_location": "sector_4",
+    "atmosphere": {
+      "lighting": "Deep purple mood lighting, strobe flashes",
+      "sounds": "Heavy bass thumping through the floor, clinking glasses, hushed conversations",
+      "smells": "Synthetic alcohol, smoke, cheap perfume"
+    },
+    "description": "A low-end dive bar frequented by fixers and runners. The booths are shielded for privacy. The bartender is a drone arm extending from the ceiling.",
+    "items_of_interest": [
+      "The VIP booth in the back corner",
+      "Holographic dancer pole (glitchy)"
+    ]
+  },
+  "arasaka_tower_lobby": {
+    "name": "Arasaka Tower Lobby",
+    "type": "Interior",
+    "parent_location": "city_center",
+    "atmosphere": {
+      "lighting": "Sterile, cold white light, excessive brightness",
+      "sounds": "Eerie silence, soft footsteps on marble, polite AI announcements",
+      "smells": "Filtered air, nothingness"
+    },
+    "description": "The opulence of the corporate elite. White marble floors, towering glass walls, and armed guards who look more machine than man. It feels like a temple to capitalism.",
+    "items_of_interest": [
+      "The reception desk (armored)",
+      "Security scanners at the elevator banks"
+    ]
+  }
+}

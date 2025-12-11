@@ -1,3 +1,0 @@
-2025-12-05 20:57:22,489 - core.project_manager - INFO - Created project: slop
-2025-12-05 20:57:22,489 - core.project_manager - INFO - Switched to project: slop
-2025-12-05 20:57:24,382 - asyncio - DEBUG - Using proactor: IocpProactor

@@ -1,0 +1,123 @@
+{
+  "kael_voss": {
+    "name": "Kael Voss",
+    "aliases": [
+      "The Ghost",
+      "K"
+    ],
+    "role": "Protagonist",
+    "archetype": "Reluctant Hero",
+    "appearance": {
+      "age": 30,
+      "features": "Scar above left eye, cybernetic right arm (matte black finish), perpetually tired grey eyes",
+      "clothing": "Worn leather trenchcoat, military boots, tactical vest concealed under street clothes"
+    },
+    "psychology": {
+      "traits": [
+        "Cynical",
+        "Protective",
+        "Impulsive"
+      ],
+      "fears": [
+        "Betrayal",
+        "Closed spaces",
+        "Losing his humanity to augmentation"
+      ],
+      "motivation": "To clear his name and expose the corporate conspiracy that framed him."
+    },
+    "voice": {
+      "tone": "Gruff, concise, uses street slang. Avoids long monologues.",
+      "catchphrases": [
+        "Not my problem.",
+        "Systems green."
+      ]
+    },
+    "relationships": {
+      "mara_syn": "Former Partner / Rival - complicated history, lingering trust issues.",
+      "doc_riley": "Mentor - acts as a father figure and tech supplier."
+    },
+    "inventory": [
+      "Plasma Revolver",
+      "Encrypted Data Chip",
+      "Hacking Deck (Model: Ono-Sendai)"
+    ]
+  },
+  "mara_syn": {
+    "name": "Mara Syn",
+    "aliases": [
+      "Viper"
+    ],
+    "role": "Antagonist",
+    "archetype": "Femme Fatale / Corporate Enforcer",
+    "appearance": {
+      "age": 28,
+      "features": "Neon blue synthetic hair, ocular implants with HUD, pristine corporate suit",
+      "clothing": "High-end corporate armor weave, stiletto heels"
+    },
+    "psychology": {
+      "traits": [
+        "Ambitious",
+        "Manipulative",
+        "Calculated"
+      ],
+      "fears": [
+        "Irrelevance",
+        "Being controlled"
+      ],
+      "motivation": "To climb the corporate ladder at any cost."
+    },
+    "voice": {
+      "tone": "Smooth, persuasive, slightly condescending. Uses corporate buzzwords.",
+      "catchphrases": [
+        "It's just business.",
+        "adapt or die."
+      ]
+    },
+    "relationships": {
+      "kael_voss": "Target / Old Flame - views him as a loose end."
+    },
+    "inventory": [
+      "Monofilament Whip",
+      "Corporate ID Badge (Level 5 Clearance)"
+    ]
+  },
+  "doc_riley": {
+    "name": "Doc Riley",
+    "aliases": [
+      "Doc"
+    ],
+    "role": "Supporting",
+    "archetype": "The Mentor",
+    "appearance": {
+      "age": 65,
+      "features": "Wild white hair, multiple optical magnifiers attached to glasses, oil-stained hands",
+      "clothing": "Dirty lab coat over suspenders"
+    },
+    "psychology": {
+      "traits": [
+        "Eccentric",
+        "Brilliant",
+        "Paranoid"
+      ],
+      "fears": [
+        "Surveillance",
+        "The network going dark"
+      ],
+      "motivation": "To keep the old tech alive and help Kael survive."
+    },
+    "voice": {
+      "tone": "Rambling, enthusiastic, technical jargon mixed with old-world wisdom.",
+      "catchphrases": [
+        "Hold your horses.",
+        "Let me look at the schematics."
+      ]
+    },
+    "relationships": {
+      "kael_voss": "Protégé - worries about his recklessness."
+    },
+    "inventory": [
+      "Multi-tool",
+      "Portable Server"
+    ]
+  }
+}

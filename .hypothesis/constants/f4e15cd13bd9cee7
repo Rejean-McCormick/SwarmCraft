@@ -1,4 +1,0 @@
-# file: C:\Users\kyle\projects\zaiswarmchat\agents\base_agent.py
-# hypothesis_version: 6.148.7
-
-[200, 600, 'Architect', 'Authorization', 'Content-Type', 'Task Complete', 'agent_id', 'application/json', 'arguments', 'assistant', 'auto', 'choices', 'completion_tokens', 'content', 'current_task_id', 'function', 'id', 'max_tokens', 'message', 'messages', 'model', 'name', 'persona', 'prompt_tokens', 'role', 'speak_probability', 'status', 'system', 'temperature', 'tool', 'tool_call_id', 'tool_calls', 'tool_choice', 'tools', 'tools_enabled', 'usage', '{agent_name}', '{}']

@@ -1,4 +1,0 @@
-# file: C:\Users\kyle\AppData\Roaming\Python\Python313\site-packages\aiohttp\tracing.py
-# hypothesis_version: 6.148.7
-
-['CIMultiDict[str]', 'ClientSession', 'TraceConfig', '_ParamT_contra']

@@ -1,185 +1,166 @@
-"""
-Project Manager for Multi-Agent Swarm.
-
-Handles multiple project workspaces with isolated data, scratch folders,
-and memory databases.
-"""
-
 import json
+import logging
 import shutil
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from datetime import datetime
-import logging
+
+# --- Constants ---
+DEFAULT_PROJECTS_ROOT = Path("projects")
+TEMPLATE_DIR = Path("templates") # Optional, for future use
 
 logger = logging.getLogger(__name__)
 
-# Projects directory at repo root
-PROJECTS_DIR = Path(__file__).parent.parent / "projects"
-
-
-class Project:
-    """Represents a single project workspace."""
-    
-    def __init__(self, name: str):
-        self.name = name
-        self.root = PROJECTS_DIR / name
-        self.scratch_dir = self.root / "scratch"
-        self.data_dir = self.root / "data"
-        self.shared_dir = self.scratch_dir / "shared"
-        self.config_file = self.root / "project.json"
-    
-    def ensure_exists(self):
-        """Create project directories if they don't exist."""
-        self.scratch_dir.mkdir(parents=True, exist_ok=True)
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.shared_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Create project config if it doesn't exist
-        if not self.config_file.exists():
-            self._save_config({
-                "name": self.name,
-                "created_at": datetime.now().isoformat(),
-                "description": "",
-            })
-    
-    def _save_config(self, config: Dict[str, Any]):
-        """Save project configuration."""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2)
-    
-    def _load_config(self) -> Dict[str, Any]:
-        """Load project configuration."""
-        if self.config_file.exists():
-            with open(self.config_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {"name": self.name}
-
-    @property
-    def memory_db_path(self) -> Path:
-        """Path to the project's memory database."""
-        return self.data_dir / "memory.db"
-    
-    @property
-    def chat_history_path(self) -> Path:
-        """Path to the project's chat history."""
-        return self.data_dir / "chat_history.json"
-    
-    @property
-    def master_plan_path(self) -> Path:
-        """Path to the project's master plan."""
-        return self.shared_dir / "master_plan.md"
-    
-    @property
-    def settings_path(self) -> Path:
-        """Path to project-specific settings."""
-        return self.data_dir / "settings.json"
-    
-    def get_info(self) -> Dict[str, Any]:
-        """Get project information."""
-        config = self._load_config()
-        return {
-            "name": self.name,
-            "path": str(self.root),
-            "created_at": config.get("created_at", "Unknown"),
-            "description": config.get("description", ""),
-            "has_master_plan": self.master_plan_path.exists(),
-        }
-    
-    def set_description(self, description: str):
-        """Set project description."""
-        config = self._load_config()
-        config["description"] = description
-        self._save_config(config)
-
-
 class ProjectManager:
-    """Manages multiple project workspaces."""
-    
-    _instance = None
-    _current_project: Optional[Project] = None
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            PROJECTS_DIR.mkdir(exist_ok=True)
-        return cls._instance
-    
-    def list_projects(self) -> List[Project]:
-        """List all existing projects."""
-        if not PROJECTS_DIR.exists():
+    """
+    The Librarian.
+    Manages the lifecycle of project directories.
+    """
+
+    def __init__(self, root_dir: Path = DEFAULT_PROJECTS_ROOT):
+        self.root = root_dir
+        self.state_file = self.root / ".last_project"
+        self._ensure_root()
+
+    def _ensure_root(self):
+        """Creates the projects root folder if missing."""
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def list_projects(self) -> List[str]:
+        """Returns a list of valid project IDs (folder names)."""
+        if not self.root.exists():
             return []
+        
         projects = []
-        for d in PROJECTS_DIR.iterdir():
-            if d.is_dir() and (d / "project.json").exists():
-                projects.append(Project(d.name))
-        return projects
-    
-    def project_exists(self, name: str) -> bool:
-        """Check if a project exists."""
-        return (PROJECTS_DIR / name / "project.json").exists()
-    
-    def create_project(self, name: str, description: str = "") -> Project:
-        """Create a new project."""
-        # Sanitize name
-        safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
-        
-        project = Project(safe_name)
-        project.ensure_exists()
-        
-        if description:
-            project.set_description(description)
-        
-        logger.info(f"Created project: {safe_name}")
-        return project
-    
-    def load_project(self, name: str) -> Project:
-        """Load an existing project."""
-        project = Project(name)
-        if not project.root.exists():
-            raise ValueError(f"Project '{name}' does not exist")
-        return project
-    
-    def delete_project(self, name: str, confirm: bool = False):
-        """Delete a project and all its data."""
-        if not confirm:
-            raise ValueError("Must confirm deletion")
-        
-        project = Project(name)
-        if project.root.exists():
-            shutil.rmtree(project.root)
-            logger.info(f"Deleted project: {name}")
-    
-    def set_current(self, project: Project):
-        """Set the current active project."""
-        self._current_project = project
-        self._save_last_project(project.name)
-        logger.info(f"Switched to project: {project.name}")
-    
-    @property
-    def current(self) -> Optional[Project]:
-        """Get the current active project."""
-        return self._current_project
-    
-    def _save_last_project(self, name: str):
-        """Save the last used project name."""
-        config_file = PROJECTS_DIR / ".last_project"
-        with open(config_file, 'w') as f:
-            f.write(name)
-    
-    def get_last_project(self) -> Optional[str]:
-        """Get the last used project name."""
-        config_file = PROJECTS_DIR / ".last_project"
-        if config_file.exists():
-            return config_file.read_text().strip()
+        for item in self.root.iterdir():
+            if item.is_dir() and not item.name.startswith('.'):
+                # Basic validation: does it look like a TextCraft project?
+                if (item / "data" / "matrix.json").exists():
+                    projects.append(item.name)
+        return sorted(projects)
+
+    def get_last_active_project(self) -> Optional[str]:
+        """Reads the persistent state to find the last active project ID."""
+        try:
+            if self.state_file.exists():
+                return self.state_file.read_text(encoding="utf-8").strip()
+        except Exception as e:
+            logger.warning(f"Failed to read last project state: {e}")
         return None
 
+    def set_active_project(self, project_id: str) -> None:
+        """Persists the currently active project ID."""
+        try:
+            self.state_file.write_text(project_id, encoding="utf-8")
+        except Exception as e:
+            logger.error(f"Failed to save active project state: {e}")
 
-def get_project_manager() -> ProjectManager:
-    """Get the singleton project manager."""
-    return ProjectManager()
+    def get_project_path(self, project_id: str) -> Optional[Path]:
+        """Resolves the absolute path for a project ID."""
+        target = self.root / project_id
+        if target.exists() and target.is_dir():
+            return target.resolve()
+        return None
 
+    def create_project(self, project_id: str, title: str = "Untitled Project") -> bool:
+        """
+        Scaffolds a new project directory structure with default files.
+        Returns True if successful, False if project already exists.
+        """
+        target_dir = self.root / project_id
+        if target_dir.exists():
+            logger.warning(f"Project '{project_id}' already exists.")
+            return False
 
-def get_current_project() -> Optional[Project]:
-    """Get the current active project."""
-    return get_project_manager().current
+        try:
+            logger.info(f"Scaffolding new project: {project_id}...")
+            
+            # 1. Create Directory Hierarchy
+            data_dir = target_dir / "data"
+            bible_dir = data_dir / "story_bible"
+            manu_dir = data_dir / "manuscripts"
+            
+            manu_dir.mkdir(parents=True, exist_ok=True)
+            bible_dir.mkdir(parents=True, exist_ok=True)
+
+            # 2. Create Default Matrix (The State)
+            matrix = {
+                "meta": {
+                    "title": title,
+                    "project_status": "ACTIVE",
+                    "version": "1.0",
+                    "created_at": "now" # In real app, use datetime
+                },
+                "metrics": {
+                    "total_word_count": 0,
+                    "chapter_count": 0,
+                    "narrative_integrity_score": 100
+                },
+                "content": {},
+                "active_task": {}
+            }
+            self._write_json(data_dir / "matrix.json", matrix)
+
+            # 3. Create Default Control (The Bridge)
+            control = {
+                "system_status": "RUNNING",
+                "architect_override": {"active": False, "instruction": None, "force_target": None},
+                "runtime_settings": {"global_temperature": 0.7, "model_override": None}
+            }
+            self._write_json(data_dir / "control.json", control)
+
+            # 4. Create Default Story Bible (The Knowledge)
+            self._scaffold_bible(bible_dir, title)
+
+            # 5. Create Initial Chapter
+            initial_chapter = f"# Chapter 1: The Start\n\n[TODO: Write the opening hook for {title}]"
+            with open(manu_dir / "ch01_Start.md", "w", encoding="utf-8") as f:
+                f.write(initial_chapter)
+
+            logger.info(f"Project '{project_id}' created successfully.")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to create project {project_id}: {e}")
+            # Cleanup partial creation
+            if target_dir.exists():
+                shutil.rmtree(target_dir)
+            return False
+
+    def _scaffold_bible(self, bible_dir: Path, title: str):
+        """Helper to populate the Story Bible with default templates."""
+        
+        # Project Config
+        conf = {
+            "meta": {"title": title, "author": "AI & User"},
+            "style": {"genre": "General Fiction", "tone": "Balanced", "tense": "Past"},
+            "constraints": {"chapter_target_word_count": 2000, "forbidden_tropes": ["Deus Ex Machina"]}
+        }
+        self._write_json(bible_dir / "project_conf.json", conf)
+
+        # Personas (System Prompts)
+        personas = {
+            "architect": {
+                "model": "gpt-4-turbo",
+                "system_prompt": "You are the Architect. You plan the novel structure based on {{genre}} and {{style_guide}}."
+            },
+            "narrator": {
+                "model": "gpt-4-turbo", 
+                "temperature": 0.8,
+                "system_prompt": "You are the Narrator. You write vivid prose for {{title}} in a {{tone}} tone."
+            },
+            "editor": {
+                "model": "gpt-4-turbo",
+                "system_prompt": "You are the Editor. You check for continuity errors and style violations."
+            }
+        }
+        self._write_json(bible_dir / "personas.json", personas)
+
+        # Stubs for other files
+        self._write_json(bible_dir / "characters.json", {})
+        self._write_json(bible_dir / "locations.json", {})
+        self._write_json(bible_dir / "timeline.json", {"events": []})
+
+    def _write_json(self, path: Path, data: Dict[str, Any]):
+        """Helper for atomic JSON writing."""
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)

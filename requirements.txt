@@ -1,33 +1,25 @@
-# Multi-Agent Chatroom Dependencies
-# Z.ai API Communication
+# --- Core: The Brain & Network ---
+# Async HTTP client for high-performance LLM API calls
 aiohttp>=3.9.0
+# Robust retry logic with exponential backoff
+tenacity>=8.2.0
+# OpenAI Client (Required for RAG Embeddings)
+openai>=1.0.0
 
-# Environment Configuration
+# --- Core: The Logic & Memory ---
+# Non-blocking file I/O for Scanner/Tools
+aiofiles>=23.2.0
+# Configuration management (.env)
 python-dotenv>=1.0.0
+# Vector Database for RAG (Long-term Memory)
+chromadb>=0.4.0
 
-# WebSocket Server
-websockets>=12.0
+# --- Interface & Monitoring ---
+# Terminal User Interface framework (The Dashboard)
+textual>=0.86.0
+# Rich text formatting (Logging & Visuals)
+rich>=13.7.0
 
-# Discord Integration
-disnake>=2.9.0
-
-# Data Persistence
-aiosqlite>=0.19.0
-aiofiles>=23.0.0
-
-# Utilities
-asyncio-throttle>=1.0.2
-
-# Rich Terminal UI (optional but recommended)
-rich>=13.0.0
-
-# Textual TUI Framework (for dashboard)
-textual>=0.45.0
-
-# Testing
-pytest>=7.0.0
-hypothesis>=6.0.0
-
-# Web Dashboard
-flask>=3.0.0
-flask-socketio>=5.3.0
+# --- Optional / Development ---
+# Type checking support
+typing-extensions>=4.9.0

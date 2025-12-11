@@ -1,0 +1,63 @@
+{
+  "events": [
+    {
+      "id": "incident_zero",
+      "name": "The Blackout Incident",
+      "timestamp": "2077-01-15T03:00:00",
+      "description": "A massive power surge fried the grid in Sector 4. Kael was framed for the sabotage.",
+      "participants": [
+        "kael_voss",
+        "mara_syn"
+      ],
+      "location": "sector_4",
+      "status": "backstory"
+    },
+    {
+      "id": "ch01_scene01",
+      "name": "The Awakening",
+      "timestamp": "2077-02-01T08:00:00",
+      "description": "Kael wakes up in Doc Riley's workshop with a new cybernetic arm and memory gaps.",
+      "participants": [
+        "kael_voss",
+        "doc_riley"
+      ],
+      "location": "doc_rileys_workshop",
+      "status": "plot_point"
+    },
+    {
+      "id": "ch01_scene02",
+      "name": "The Message",
+      "timestamp": "2077-02-01T09:30:00",
+      "description": "Kael receives an encrypted message from an unknown sender (Mara) warning him to run.",
+      "participants": [
+        "kael_voss"
+      ],
+      "location": "doc_rileys_workshop",
+      "status": "plot_point"
+    },
+    {
+      "id": "ch02_scene01",
+      "name": "Bar Confrontation",
+      "timestamp": "2077-02-01T21:00:00",
+      "description": "Kael goes to The Black Lotus to find a fixer but runs into Mara instead.",
+      "participants": [
+        "kael_voss",
+        "mara_syn"
+      ],
+      "location": "black_lotus_bar",
+      "status": "plot_point"
+    },
+    {
+      "id": "ch02_scene02",
+      "name": "The Raid",
+      "timestamp": "2077-02-01T21:45:00",
+      "description": "Corporate death squads raid the bar. Kael and Mara are forced to fight their way out together.",
+      "participants": [
+        "kael_voss",
+        "mara_syn"
+      ],
+      "location": "black_lotus_bar",
+      "status": "action_sequence"
+    }
+  ]
+}

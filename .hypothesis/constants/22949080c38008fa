@@ -1,4 +1,0 @@
-# file: C:\Users\kyle\AppData\Roaming\Python\Python313\site-packages\markdown_it\rules_block\heading.py
-# hypothesis_version: 6.148.7
-
-['#', '########', 'h', 'heading_close', 'heading_open', 'inline']

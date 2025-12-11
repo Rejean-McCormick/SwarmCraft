@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "title": "Neon Rain",
+    "author": "TextCraft User",
+    "series": "The Cyberpunk Chronicles",
+    "target_audience": "Adult Sci-Fi"
+  },
+  "style": {
+    "genre": "Cyberpunk Noir",
+    "tone": "Gritty, atmospheric, cynical but hopeful",
+    "pov": "Third Person Limited",
+    "tense": "Past Tense",
+    "pacing": "Fast-paced action mixed with slow investigative beats"
+  },
+  "constraints": {
+    "chapter_target_word_count": 2500,
+    "forbidden_tropes": [
+      "Deus Ex Machina",
+      "Love Triangles",
+      "The Chosen One",
+      "Instant Expert"
+    ],
+    "required_themes": [
+      "Transhumanism",
+      "Corporate Greed",
+      "Identity vs Memory"
+    ]
+  },
+  "formatting": {
+    "use_british_spelling": false,
+    "chapter_header_format": "## Chapter {{n}}: {{title}}"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "project_name": "New TextCraft Project",
+    "project_status": "ACTIVE",
+    "last_scan_timestamp": "1970-01-01T00:00:00",
+    "version": "2.1"
+  },
+  "metrics": {
+    "total_word_count": 0,
+    "chapter_count": 0,
+    "narrative_integrity_score": 100
+  },
+  "content": {
+    "ch01": {
+      "title": "The Beginning",
+      "path": "data/manuscripts/ch01_The_Beginning.md",
+      "word_count": 0,
+      "status": "DRAFTING",
+      "continuity_check": "PENDING",
+      "last_modified": "1970-01-01T00:00:00",
+      "editor_notes": []
+    }
+  },
+  "active_task": {
+    "assigned_to": null,
+    "target": null,
+    "action": null
+  }
+}

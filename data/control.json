@@ -1,0 +1,12 @@
+{
+  "system_status": "RUNNING",
+  "architect_override": {
+    "active": false,
+    "instruction": null,
+    "force_target": null
+  },
+  "runtime_settings": {
+    "global_temperature": 0.7,
+    "model_override": null
+  }
+}

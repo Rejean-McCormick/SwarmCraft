@@ -1,4 +1,0 @@
-# file: C:\Users\kyle\projects\zaiswarmchat\agents\__init__.py
-# hypothesis_version: 6.148.7
-
-['AGENT_CLASSES', 'Architect', 'BackendDev', 'BaseAgent', 'DEFAULT_AGENTS', 'DISPLAY_NAME_TO_ROLE', 'DevOpsEngineer', 'FrontendDev', 'ProjectManager', 'QAEngineer', 'TechWriter', 'architect', 'backend_dev', 'bossy mcarchitect', 'bugsy mctester', 'checky mcmanager', 'codey mcbackend', 'create_agent', 'deployo mcops', 'devops', 'docy mcwriter', 'frontend_dev', 'pixel mcfrontend', 'project_manager', 'qa_engineer', 'resolve_role', 'tech_writer']
