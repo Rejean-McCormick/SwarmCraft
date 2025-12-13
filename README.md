@@ -1,91 +1,87 @@
-# TextCraft (Fork of Swarmussy) - v3.0.0
+# SwarmCraft (Fork of mojomast/swarmussy) — v3.0.0
 
-## The Multi-Project and RAG Architecture
+## **POWERED BY GROK** ⚡️
 
-[](https://opensource.org/licenses/MIT)
-[](https://www.python.org/downloads/)
-[](https://www.google.com/search?q=https://github.com/Rejean-McCormick/swarmussy)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
------
+---
 
-### **Credit and Acknowledgements**
+## Credit and Acknowledgements
 
-This repository is a **Major Architectural Rewrite (Fork)** of the original Swarmussy project.
+This repository is a **Major Architectural Rewrite (Fork)** of the original project:
 
-  * **Original Code and Inspiration:** **[mojomast/swarmussy](https://github.com/mojomast/swarmussy)**
-  * **Rewrite Author (v3.0):** **[Rejean-McCormick](https://github.com/Rejean-McCormick)**
+- **Original Code and Inspiration:** **[mojomast/swarmussy](https://github.com/mojomast/swarmussy)**
+- **Rewrite / Architecture (v3.0):** **[Rejean-McCormick](https://github.com/Rejean-McCormick)**
 
------
+---
 
-## 🚀 Architectural Philosophy: The AWA Influence
+## What SwarmCraft Is
 
-TextCraft v3.0 moves away from the multi-agent *Chatroom* model to a **Deterministic Pipeline** influenced by the architecture principles of the **Abstract Wikipedia Architect (AWA)**.
+SwarmCraft is a **deterministic story-engine** for long-form writing: it plans, drafts, reviews, and iterates on narrative content using a strict pipeline and a central state model.
 
-AWA seeks to decouple abstract concepts from their language-specific implementations. TextCraft applies this to **decouple the Novel's State from the Agents' Logic**.
+It is designed for:
+- **multi-project** story universes
+- **long-term continuity** via RAG memory
+- **human-friendly story scaffolding** (templates + outline grid)
+- reliable orchestration that is **restart-safe** and **debuggable**
 
-### AWA Principles Applied to TextCraft:
+---
 
-| AWA Principle | TextCraft Implementation | Benefit |
+## Architectural Philosophy: Derived from the “Architect” Meta-Structure (AWA Influence)
+
+SwarmCraft moves away from the multi-agent *chatroom* model and into a **Deterministic Pipeline** guided by the meta-structure of an “Architect” system: decouple creative intent and project state from agent logic, and enforce predictable state transitions.
+
+| Principle | SwarmCraft Implementation | Benefit |
 | :--- | :--- | :--- |
-| **Decoupling (Statelessness)** | **Agents are Stateless Services** (`ai_services/`). They are pure functions (`narrator.execute(context)`) that perform a task and terminate, instead of persistent objects in a chat session. | Dramatically reduces complexity, eliminates race conditions, and improves crash recovery. |
-| **Central Data Model** | The **Matrix (`matrix.json`)** acts as the central, machine-readable source of truth (similar to AWA's Central Data Index). | Ensures all components (Agents, Scanner, Dashboard) share the exact same, version-controlled view of the project state. |
-| **Functional Monotonicity** | The **Orchestrator** enforces a strict, atomic cycle: **SCAN $\rightarrow$ PLAN $\rightarrow$ EXECUTE**. No agent can interrupt another's process, mirroring the predictable update sequence required by large, stable data systems like AWA. | Guarantees deterministic output and simplifies debugging. |
-| **Data Immutability** | Agents modify the world **only** through controlled file operations (`agent_tools`), which triggers re-indexing by the `Scanner`. | The file system is the ultimate source of truth, preventing state drift between the database and the physical world. |
+| **Decoupling / Statelessness** | Agents are **stateless services** (`ai_services/`). They execute a task and terminate. | Less complexity, improved crash recovery, easier debugging. |
+| **Central Data Model** | The **Matrix** (`data/matrix.json`) is the machine-readable source of truth. | Eliminates state drift; every module sees the same project state. |
+| **Deterministic Update Cycle** | Orchestrator enforces: **SCAN → PLAN → EXECUTE** | Predictable behavior and reproducible runs. |
+| **Controlled World Mutation** | Agents modify the world only through controlled file ops (`agent_tools`). | Clear audit trail; scanner re-indexes the world reliably. |
 
------
+---
 
-## ✨ Core Features of TextCraft v3.0
+## Core Story System (Scaffold + Parts)
 
-The entire system is redesigned for stability, long-form narrative coherence, and enterprise-grade project management.
+SwarmCraft separates **creative intent** from **runtime state**:
 
-| Feature | Description | Enabled by Module |
+### Story Bible (Creative Intent)
+- **Templates:** `data/story_bible/templates/<template_id>.json`  
+  Define thread sets (Plot, Character Development, etc.), cadence rules, and default parts/chapter.
+- **Outline:** `data/story_bible/outline.json`  
+  The structured scaffold: **chapters → parts mapping**, per-part thread beats, and per-part “contract” (goal/obstacle/turn/outcome).
+- **Grid Editing:** The outline is displayed as a **spreadsheet-like grid** for humans (rows=threads, columns=parts), with optional CSV round-trip.
+
+### Matrix (Runtime State)
+- `data/matrix.json` tracks what exists, what’s drafted, what needs revision, and what’s locked.
+
+### Parts
+A **Part** is the atomic unit of work the system drafts/revises.
+- Children’s book templates can use **1 part = 1 chapter**
+- Other templates can use **1–6 parts per chapter** (user-configurable)
+
+---
+
+## ✨ Core Features
+
+| Feature | Description | Enabled by |
 | :--- | :--- | :--- |
-| **Multi-Project System** | Manage multiple isolated novel universes simultaneously. The system can be switched between projects without restarting the engine. | `core/project_manager.py` |
-| **RAG Long-Term Memory** | Utilizes **ChromaDB** to index every paragraph written. Agents can query this memory to maintain continuity over hundreds of thousands of words, solving the plot-hole problem in long novels. | `core/memory_store.py` |
-| **TUI Dashboard** | Replaced the complex Web UI with a robust, low-latency Terminal User Interface (TUI) powered by `textual`. This acts as a real-time Mission Control. | `dashboard.py` / `ui/` |
-| **Decoupled Architecture** | Moteur (Engine) and Moniteur (Dashboard) run as separate processes, ensuring the UI never freezes, even if the AI is running a 5-minute task. | `core/orchestrator.py` |
+| **Powered by Grok** | All writing/planning services run through Grok (via provider adapter). | `core/ai_client.py` (adapter layer) |
+| **Multi-Project System** | Multiple isolated story universes; switch projects without restarting. | `core/project_manager.py` |
+| **RAG Long-Term Memory** | Indexes prose into ChromaDB to maintain continuity at scale. | `core/memory_store.py` |
+| **TUI Dashboard** | Real-time mission control using `textual`. | `dashboard.py` / `ui/` |
+| **Deterministic Orchestration** | Reliable scan/plan/execute loop; restart-safe. | `core/orchestrator.py` |
+| **Story Scaffold Templates** | Genre templates + outline grid + wizard-generated first scaffold. | `data/story_bible/` + addendum docs |
 
------
+---
 
 ## ⚙️ Installation and Launch Guide
 
-The system runs as two decoupled processes. You will need **two separate terminal windows**.
+SwarmCraft runs as two decoupled processes. Use **two terminal windows**.
 
-### 1\. Setup
+### 1. Setup
 
-1.  Clone the repository and access the folder.
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  Configure your API Key. Copy the example file and fill in your key:
-    ```bash
-    cp .env.example .env
-    # Open .env and fill in LLM_API_KEY
-    ```
-
-### 2\. Launch
-
-Start the processes in this order:
-
-#### **Terminal 1: The Engine (Moteur)**
-
-*Role: The Brain. Runs the Orchestrator, Planning, and Execution Loop.*
-
-```bash
-python main.py
-```
-
-#### **Terminal 2: The Monitor (Moniteur)**
-
-*Role: The View. Runs the real-time Dashboard (TUI).*
-
-```bash
-python dashboard.py
-```
-
-The Dashboard will launch in full-screen TUI mode, displaying the status of the project being processed by the Engine. Press **`q`** on the dashboard and **`Ctrl+C`** on the engine log to stop the system gracefully.
-
------
-
-*For a deeper dive into the architectural flow, see [docs/13\_ARCHITECTURE\_ADVANCED.md](https://www.google.com/search?q=./docs/13_ARCHITECTURE_ADVANCED.md).*
+1. Clone the repository and enter the folder.
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
