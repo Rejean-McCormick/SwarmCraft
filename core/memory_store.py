@@ -1,6 +1,9 @@
 import os
 import logging
-import chromadb
+try:
+    import chromadb
+except Exception:
+    chromadb = None
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -26,10 +29,36 @@ class MemoryStore:
         # RAG Configuration
         self.use_rag = os.getenv("USE_RAG", "false").lower() == "true"
         self.embedding_model = os.getenv("RAG_EMBEDDING_MODEL", "text-embedding-3-small")
-        self.api_key = os.getenv("LLM_API_KEY")
+        llm_api_key = os.getenv("LLM_API_KEY")
+        requesty_api_key = os.getenv("REQUESTY_API_KEY")
+        self.api_key = llm_api_key or requesty_api_key
+
+        _raw_base_url = os.getenv("LLM_API_BASE_URL")
+        if requesty_api_key and not llm_api_key and _raw_base_url == "https://api.openai.com/v1/chat/completions":
+            _raw_base_url = None
+
+        base_url_prefix = os.getenv("REQUESTY_BASE_URL") or _raw_base_url
+        if not base_url_prefix:
+            if requesty_api_key and not llm_api_key:
+                base_url_prefix = "https://router.requesty.ai/v1"
+
+        if base_url_prefix and base_url_prefix.rstrip("/").endswith("/chat/completions"):
+            base_url_prefix = base_url_prefix[: -len("/chat/completions")].rstrip("/")
+
+        default_headers = {}
+        requesty_http_referer = os.getenv("REQUESTY_HTTP_REFERER")
+        requesty_x_title = os.getenv("REQUESTY_X_TITLE")
+        if requesty_http_referer:
+            default_headers["HTTP-Referer"] = requesty_http_referer
+        if requesty_x_title:
+            default_headers["X-Title"] = requesty_x_title
 
         # Initialize ChromaDB Client
         if self.use_rag:
+            if chromadb is None:
+                logger.error("ChromaDB is not installed; disabling RAG MemoryStore.")
+                self.use_rag = False
+                return
             try:
                 self.client = chromadb.PersistentClient(path=str(self.db_path))
                 # Create or get the collection for this project's narrative
@@ -37,7 +66,10 @@ class MemoryStore:
                     name="narrative_memory",
                     metadata={"hnsw:space": "cosine"} # Cosine similarity for text search
                 )
-                self.openai_client = OpenAI(api_key=self.api_key)
+                if base_url_prefix:
+                    self.openai_client = OpenAI(api_key=self.api_key, base_url=base_url_prefix, default_headers=default_headers or None)
+                else:
+                    self.openai_client = OpenAI(api_key=self.api_key, default_headers=default_headers or None)
                 logger.info(f"MemoryStore initialized at {self.db_path}")
             except Exception as e:
                 logger.error(f"Failed to initialize MemoryStore: {e}")

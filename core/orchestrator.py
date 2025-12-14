@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -14,6 +15,8 @@ from ai_services import architect, narrator, editor
 # --- Configuration ---
 MAX_CONSECUTIVE_ERRORS = 3
 LOOP_DELAY_SECONDS = 2  # Breathing room between cycles
+IDLE_DELAY_SECONDS = 10  # When there is no actionable work, avoid spamming model calls
+AUTO_CONTINUE_DRAFTING = os.getenv("AUTO_CONTINUE_DRAFTING", "0").strip().lower() not in {"0", "false", "no", "off"}
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +162,38 @@ class Orchestrator:
         self.is_running = False
         logger.info("Orchestrator: Shutdown signal received.")
 
+    def _clear_continuity_flag(self, target_file: str):
+        """After a narrator fix pass, clear continuity_check so the chapter can be re-reviewed."""
+        try:
+            matrix = self._load_matrix()
+            content_map = matrix.get("content", {})
+            if not isinstance(content_map, dict) or not target_file:
+                return
+
+            file_id = None
+            for fid, entry in content_map.items():
+                if not isinstance(entry, dict):
+                    continue
+                path = entry.get("path", "")
+                if target_file in path or f"{fid}_" in target_file or target_file.startswith(fid):
+                    file_id = fid
+                    break
+
+            if not file_id:
+                return
+
+            entry = content_map.get(file_id)
+            if not isinstance(entry, dict):
+                return
+
+            if entry.get("continuity_check") == "FAIL":
+                entry["continuity_check"] = "PENDING"
+                with open(self.matrix_path, 'w', encoding='utf-8') as f:
+                    json.dump(matrix, f, indent=2)
+                logger.info(f"Cleared continuity_check FAIL -> PENDING for {file_id} after narrator fix.")
+        except Exception as e:
+            logger.error(f"Failed to clear continuity flag: {e}")
+
     async def step(self):
         """
         Executes a single atomic cycle of the TextCraft architecture.
@@ -176,6 +211,35 @@ class Orchestrator:
             logger.info("Project marked COMPLETE. Orchestrator standing by.")
             await asyncio.sleep(10)
             return
+
+        # If there's no override and nothing actionable, don't call the Architect every loop.
+        if not override_signal:
+            content_map = matrix.get("content")
+            if isinstance(content_map, dict) and content_map:
+                has_actionable = False
+                for entry in content_map.values():
+                    if not isinstance(entry, dict):
+                        continue
+                    status = entry.get("status")
+                    continuity = entry.get("continuity_check")
+                    if status in {"EMPTY", "REVIEW_READY"} or continuity == "FAIL" or (AUTO_CONTINUE_DRAFTING and status == "DRAFTING"):
+                        has_actionable = True
+                        break
+
+                if not has_actionable:
+                    # Check if there are any DRAFTING chapters that need to reach word count
+                    drafting_chapters = [
+                        fid for fid, entry in content_map.items()
+                        if isinstance(entry, dict) and entry.get("status") == "DRAFTING"
+                    ]
+                    if drafting_chapters:
+                        # Auto-continue drafting chapters instead of idling
+                        has_actionable = True
+                        logger.info(f"Auto-continuing DRAFTING chapters: {drafting_chapters}")
+                    else:
+                        logger.info("No actionable work detected. Idling without Architect call. (Tip: in Director Console, type an instruction like 'override continue into chapter 2', or set a file with 'target ch02_RisingAction.md', then 'start'.)")
+                        await asyncio.sleep(IDLE_DELAY_SECONDS)
+                        return
 
         # --- PHASE 2: PLAN ---
         logger.info("--- [Phase 2: PLAN] ---")
@@ -204,6 +268,7 @@ class Orchestrator:
         
         if action == "wait":
              logger.info("Architect requested wait.")
+             await asyncio.sleep(IDLE_DELAY_SECONDS)
              return
 
         # --- PHASE 3: DISPATCH ---
@@ -242,4 +307,140 @@ class Orchestrator:
         self._update_active_task(None, None, None)
         
         if result.get("status") == "success":
-            self.scanner.scan()
+            # Handle Editor verdict: update matrix status based on pass/fail
+            if agent_role == "editor":
+                verdict = result.get("verdict", "FAIL")
+                editor_notes = result.get("editor_notes", [])
+                self._apply_editor_verdict(target, verdict, editor_notes)
+
+            # If narrator performed an edit/fix pass, clear FAIL so the chapter can move back to review.
+            if agent_role == "narrator" and action == "edit" and target:
+                self._clear_continuity_flag(target)
+            
+            # Rescan to pick up file changes
+            matrix = self.scanner.scan()
+            
+            # Check if we should auto-progress to next chapter
+            self._maybe_create_next_chapter(matrix)
+
+    def _apply_editor_verdict(self, target_file: str, verdict: str, notes: list):
+        """Updates the matrix based on editor's verdict."""
+        try:
+            matrix = self._load_matrix()
+            content_map = matrix.get("content", {})
+            
+            # Find the chapter entry by filename
+            file_id = None
+            for fid, entry in content_map.items():
+                if isinstance(entry, dict):
+                    path = entry.get("path", "")
+                    if target_file in path or f"{fid}_" in target_file or target_file.startswith(fid):
+                        file_id = fid
+                        break
+            
+            if not file_id:
+                logger.warning(f"Could not find matrix entry for {target_file}")
+                return
+            
+            entry = content_map[file_id]
+            if verdict == "PASS":
+                entry["status"] = "LOCKED"
+                entry["continuity_check"] = "PASS"
+                logger.info(f"Chapter {file_id} LOCKED after passing editor review.")
+            else:
+                entry["continuity_check"] = "FAIL"
+                entry["editor_notes"] = notes
+                logger.info(f"Chapter {file_id} marked FAIL with {len(notes)} notes.")
+            
+            with open(self.matrix_path, 'w', encoding='utf-8') as f:
+                json.dump(matrix, f, indent=2)
+                
+        except Exception as e:
+            logger.error(f"Failed to apply editor verdict: {e}")
+
+    def _maybe_create_next_chapter(self, matrix: Dict[str, Any]):
+        """Creates the next chapter if all existing chapters are LOCKED."""
+        try:
+            content_map = matrix.get("content", {})
+            if not content_map:
+                return
+            
+            # Check if all chapters are LOCKED
+            all_locked = all(
+                isinstance(entry, dict) and entry.get("status") == "LOCKED"
+                for entry in content_map.values()
+            )
+            
+            if not all_locked:
+                return
+            
+            # Find the highest chapter number
+            max_chapter = 0
+            for file_id in content_map.keys():
+                # Extract chapter number from IDs like "ch01", "ch02", etc.
+                if file_id.startswith("ch"):
+                    try:
+                        num = int(file_id[2:].split("_")[0])
+                        max_chapter = max(max_chapter, num)
+                    except ValueError:
+                        pass
+            
+            # Load story_brief to check if we should continue
+            story_brief_path = self.project_root / "data" / "story_bible" / "story_brief.json"
+            story_brief = {}
+            if story_brief_path.exists():
+                with open(story_brief_path, 'r', encoding='utf-8') as f:
+                    story_brief = json.load(f)
+            
+            # Get expected chapter count from structure or default to 10
+            structure = story_brief.get("structure", {})
+            chapters = structure.get("chapters", [])
+            acts = structure.get("acts", [])
+            
+            # If no explicit chapters, derive from acts/beats
+            if not chapters and acts:
+                chapters = []
+                for act in acts:
+                    if isinstance(act, dict):
+                        act_name = act.get("name", "Act")
+                        beats = act.get("beats", [])
+                        for i, beat in enumerate(beats):
+                            if isinstance(beat, str):
+                                chapters.append({"title": f"{act_name} - {beat[:40]}", "summary": beat})
+                            elif isinstance(beat, dict):
+                                chapters.append(beat)
+            
+            expected_chapters = len(chapters) if chapters else 10
+            
+            if max_chapter >= expected_chapters:
+                logger.info(f"All {max_chapter} chapters complete. Project may be finished.")
+                return
+            
+            # Create next chapter
+            next_num = max_chapter + 1
+            next_id = f"ch{next_num:02d}"
+            
+            # Try to get chapter title from story_brief structure
+            chapter_title = f"Chapter {next_num}"
+            if chapters and next_num <= len(chapters):
+                chapter_info = chapters[next_num - 1]
+                if isinstance(chapter_info, dict):
+                    chapter_title = chapter_info.get("title", chapter_title)
+                elif isinstance(chapter_info, str):
+                    chapter_title = chapter_info
+            
+            # Sanitize title for filename
+            safe_title = "".join(c if c.isalnum() or c in " _-" else "" for c in chapter_title)
+            safe_title = safe_title.replace(" ", "_")[:30]
+            
+            next_filename = f"{next_id}_{safe_title}.md"
+            next_path = self.project_root / "data" / "manuscripts" / next_filename
+            
+            if not next_path.exists():
+                next_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(next_path, 'w', encoding='utf-8') as f:
+                    f.write(f"# Chapter {next_num}: {chapter_title}\n\n")
+                logger.info(f"Created next chapter: {next_filename}")
+            
+        except Exception as e:
+            logger.error(f"Failed to create next chapter: {e}")

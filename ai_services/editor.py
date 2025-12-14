@@ -28,18 +28,22 @@ def _load_json_config(path: Path) -> Dict[str, Any]:
         logger.error(f"Failed to load config {path}: {e}")
         return {}
 
-def _hydrate_prompt(template: str, project_conf: Dict[str, Any]) -> str:
+def _hydrate_prompt(template: str, project_conf: Dict[str, Any], story_brief: Dict[str, Any]) -> str:
     """Injects project constraints into the system prompt."""
     replacements = {
         "{{title}}": project_conf.get("meta", {}).get("title", "Untitled"),
         "{{genre}}": project_conf.get("style", {}).get("genre", "General Fiction"),
         "{{style_guide}}": json.dumps(project_conf.get("style", {}), indent=2),
-        "{{forbidden_tropes}}": json.dumps(project_conf.get("constraints", {}).get("forbidden_tropes", []), indent=2)
+        "{{forbidden_tropes}}": json.dumps(project_conf.get("constraints", {}).get("forbidden_tropes", []), indent=2),
+        "{{story_brief}}": json.dumps(story_brief or {}, indent=2)
     }
     
     hydrated = template
     for key, value in replacements.items():
         hydrated = hydrated.replace(key, str(value))
+
+    if "{{story_brief}}" not in template:
+        hydrated += f"\n\nSTORY BRIEF (Source of Truth):\n{replacements['{{story_brief}}']}"
     
     return hydrated
 
@@ -70,6 +74,7 @@ async def execute(task_payload: Dict[str, Any], project_root: Path, memory_store
     # 2. Load Data
     personas = _load_json_config(bible_dir / "personas.json")
     project_conf = _load_json_config(bible_dir / "project_conf.json")
+    story_brief = _load_json_config(bible_dir / "story_brief.json")
     characters = _load_json_config(bible_dir / "characters.json")
     timeline = _load_json_config(bible_dir / "timeline.json")
     
@@ -95,7 +100,7 @@ async def execute(task_payload: Dict[str, Any], project_root: Path, memory_store
     """
 
     # 5. Prepare Prompts & Tool Loop
-    system_prompt = _hydrate_prompt(editor_config.get("system_prompt", ""), project_conf)
+    system_prompt = _hydrate_prompt(editor_config.get("system_prompt", ""), project_conf, story_brief)
     
     initial_user_msg = f"""
     REVIEW TASK:
