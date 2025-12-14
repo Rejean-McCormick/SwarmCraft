@@ -159,6 +159,29 @@ class ProjectManager:
         self._write_json(bible_dir / "characters.json", {})
         self._write_json(bible_dir / "locations.json", {})
         self._write_json(bible_dir / "timeline.json", {"events": []})
+        self._write_json(
+            bible_dir / "story_brief.json",
+            {
+                "logline": "",
+                "premise": "",
+                "themes": [],
+                "setting_rules": {},
+                "structure": {
+                    "acts": [],
+                    "beats": {
+                        "inciting_incident": "",
+                        "first_turn": "",
+                        "midpoint": "",
+                        "dark_night": "",
+                        "climax": "",
+                        "resolution": ""
+                    }
+                },
+                "plot_twists": [],
+                "character_arcs": {},
+                "ending": {"type": "", "notes": ""}
+            },
+        )
 
     def _write_json(self, path: Path, data: Dict[str, Any]):
         """Helper for atomic JSON writing."""

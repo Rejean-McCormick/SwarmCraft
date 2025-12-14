@@ -88,4 +88,117 @@ class ProjectScanner:
             return "EMPTY"
         
         # Check for explicit agent markers
-        if "[TODO]" in content or "
+        if "[TODO]" in content or "```" in content:
+            return "DRAFTING"
+
+        if word_count >= target_count:
+            return "REVIEW_READY"
+
+        return "DRAFTING"
+
+    def scan(self) -> Dict[str, Any]:
+        matrix = self._load_json(
+            self.matrix_path,
+            default={
+                "meta": {"project_status": "ACTIVE", "last_scan_timestamp": "", "version": "2.1"},
+                "metrics": {"total_word_count": 0, "chapter_count": 0, "narrative_integrity_score": 100},
+                "content": {},
+                "active_task": {}
+            }
+        )
+
+        if not isinstance(matrix, dict):
+            matrix = {}
+
+        matrix.setdefault("meta", {})
+        matrix.setdefault("metrics", {})
+        matrix.setdefault("content", {})
+        matrix.setdefault("active_task", {})
+
+        content_map: Dict[str, Any] = matrix.get("content", {})
+        if not isinstance(content_map, dict):
+            content_map = {}
+            matrix["content"] = content_map
+
+        target_count = self._get_target_word_count()
+
+        found_ids = set()
+        total_word_count = 0
+
+        for file_path in sorted(self.root.rglob("*.md")):
+            try:
+                file_id = file_path.stem.split("_")[0]
+                title_part = file_path.stem[len(file_id):].lstrip("_")
+                title = title_part.replace("_", " ") if title_part else file_id
+
+                rel_path = file_path.relative_to(self.project_root).as_posix()
+                last_modified = datetime.fromtimestamp(file_path.stat().st_mtime).isoformat()
+
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                word_count = self._count_words(content)
+                found_ids.add(file_id)
+
+                existing = content_map.get(file_id, {})
+                if not isinstance(existing, dict):
+                    existing = {}
+
+                current_status = existing.get("status", "DRAFTING")
+                status = self._determine_status(current_status, content, word_count, target_count)
+
+                continuity_check = existing.get("continuity_check", "PENDING")
+                editor_notes = existing.get("editor_notes", [])
+                if not isinstance(editor_notes, list):
+                    editor_notes = []
+
+                prev_last_modified = existing.get("last_modified")
+                content_map[file_id] = {
+                    "title": title,
+                    "path": rel_path,
+                    "word_count": word_count,
+                    "status": status,
+                    "continuity_check": continuity_check,
+                    "last_modified": last_modified,
+                    "editor_notes": editor_notes
+                }
+
+                if prev_last_modified != last_modified:
+                    try:
+                        self.memory.ingest_manuscript(file_path, content)
+                    except Exception:
+                        pass
+
+                total_word_count += word_count
+
+            except Exception as e:
+                logger.error(f"Scan failed for file {file_path}: {e}")
+
+        for file_id, entry in list(content_map.items()):
+            if file_id in found_ids:
+                continue
+            if not isinstance(entry, dict):
+                continue
+
+            current_status = entry.get("status", "DRAFTING")
+            status = self._determine_status(current_status, "", 0, target_count)
+            entry["word_count"] = 0
+            entry["status"] = status
+            if "continuity_check" not in entry:
+                entry["continuity_check"] = "PENDING"
+            if "editor_notes" not in entry or not isinstance(entry.get("editor_notes"), list):
+                entry["editor_notes"] = []
+
+        matrix["metrics"]["total_word_count"] = total_word_count
+        matrix["metrics"]["chapter_count"] = len(content_map)
+        matrix["meta"]["last_scan_timestamp"] = datetime.now().isoformat()
+
+        if content_map and all(isinstance(v, dict) and v.get("status") == "LOCKED" for v in content_map.values()):
+            matrix["meta"]["project_status"] = "COMPLETE"
+        else:
+            matrix["meta"].setdefault("project_status", "ACTIVE")
+            if matrix["meta"].get("project_status") != "PAUSED":
+                matrix["meta"]["project_status"] = "ACTIVE"
+
+        self._save_matrix(matrix)
+        return matrix

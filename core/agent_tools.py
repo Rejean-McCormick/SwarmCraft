@@ -93,6 +93,48 @@ async def write_file(path: str, content: str, project_root: Path) -> Dict[str, A
         logger.error(f"write_file failed for {path}: {e}")
         return _format_result("error", f"System error writing file: {str(e)}")
 
+async def append_file(path: str, content: str, project_root: Path) -> Dict[str, Any]:
+    """
+    Appends content to a file. Creates dirs if needed.
+    Used by: Narrator (Continuation / Iteration).
+    """
+    try:
+        target = _resolve_path(path, project_root)
+
+        # Ensure parent directories exist
+        target.parent.mkdir(parents=True, exist_ok=True)
+
+        existing_size = 0
+        if target.exists() and target.is_file():
+            existing_size = target.stat().st_size
+
+        prefix = ""
+        if existing_size > 0:
+            try:
+                async with aiofiles.open(target, mode='r', encoding='utf-8') as f:
+                    existing_tail = await f.read()
+                if existing_tail and not existing_tail.endswith("\n"):
+                    prefix = "\n"
+            except Exception:
+                # If we fail to read, we still append safely without a newline check.
+                prefix = ""
+
+        async with aiofiles.open(target, mode='a', encoding='utf-8') as f:
+            await f.write(prefix + content)
+
+        bytes_appended = len((prefix + content).encode("utf-8"))
+        return _format_result(
+            "success",
+            f"Successfully appended {len(content)} characters to {path}.",
+            {"bytes_appended": bytes_appended, "bytes_before": existing_size},
+        )
+
+    except SecurityError as e:
+        return _format_result("error", str(e))
+    except Exception as e:
+        logger.error(f"append_file failed for {path}: {e}")
+        return _format_result("error", f"System error appending file: {str(e)}")
+
 async def edit_file(path: str, search_text: str, replace_text: str, project_root: Path) -> Dict[str, Any]:
     """
     Performs a strict find-and-replace operation.
